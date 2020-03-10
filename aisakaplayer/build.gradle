@@ -18,12 +18,12 @@ android {
                 cppFlags ""
             }
             ndk {
-                abiFilters 'armeabi-v7a'
+                abiFilters 'arm64-v8a'
             }
         }
 
         ndk {
-            abiFilters 'armeabi-v7a'
+            abiFilters 'arm64-v8a'
         }
 
         sourceSets {

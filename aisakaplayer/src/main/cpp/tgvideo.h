@@ -6,16 +6,18 @@
 #define PLAYERDEMO_TGVIDEO_H
 
 
-#include "tgqueue.h"
-#include "include/libavcodec/avcodec.h"
+#include "PlayerQueue.h"
 
-class tgvideo {
+extern "C" {
+#include "include/libavcodec/avcodec.h"
+};
+
+
+class TGVideo {
 public:
     AVCodecContext *codecContext;
-
-    tgqueue videoqueue;
-
-
+    int clock;
+    PlayerQueue *playerQueue;
 
 };
 

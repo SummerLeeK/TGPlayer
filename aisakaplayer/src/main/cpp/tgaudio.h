@@ -6,8 +6,11 @@
 #define PLAYERDEMO_TGAUDIO_H
 
 
-class tgaudio {
+#include "PlayerQueue.h"
 
+class TGAudio {
+    int clock;
+    PlayerQueue *playerQueue;
 };
 
 

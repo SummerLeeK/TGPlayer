@@ -68,7 +68,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++11")
 aux_source_directory(src/main/cpp NATVIE_SOURCE)
 
 add_library( # Sets the name of the library.
-        aisakaplayer
+        tgplayer
 
         # Sets the library as a shared library.
         SHARED
@@ -104,8 +104,9 @@ find_library( # Sets the name of the path variable.
 # build script, prebuilt third-party libraries, or system libraries.
 
 target_link_libraries( # Specifies the target library.
-        aisakaplayer
+        tgplayer
         avcodec
+        avdevice
         avfilter
         avformat
         avutil

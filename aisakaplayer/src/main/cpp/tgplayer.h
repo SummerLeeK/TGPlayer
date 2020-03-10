@@ -5,24 +5,39 @@
 #ifndef PLAYERDEMO_TGPLAYER_H
 #define PLAYERDEMO_TGPLAYER_H
 
-
+extern "C" {
 #include <libavformat/avformat.h>
-#include "tgvideo.h"
-#include "tgaudio.h"
+};
 
-class tgplayer {
+#include "TGVideo.h"
+#include "TGAudio.h"
+#include "JavaCallHandle.h"
+
+
+class TGPlayer {
 public:
     AVFormatContext *formatContext;
     char *path;
-    tgvideo tgvideo;
-    tgaudio tgaudio;
+    int *playStatus;
+    pthread_t *prepareThread;
+    TGVideo *tgvideo;
+    TGAudio *tgaudio;
+    JavaCallHandle *javaCallHandle;
     int clock;
     bool isPlaying = false;
 
-    void start();
+    TGPlayer();
+
+    int setDataSource(const char *path);
+
+    int prepare();
+
+    int prepareSync();
+
+    int start();
 
 
-    void stop();
+    int stop();
 
 
 };

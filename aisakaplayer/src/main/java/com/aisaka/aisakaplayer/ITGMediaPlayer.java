@@ -4,9 +4,11 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.media.MediaMetadata;
 import android.net.Uri;
+import android.os.Bundle;
 import android.view.Surface;
 import android.view.SurfaceHolder;
 
+import java.io.IOException;
 import java.net.HttpCookie;
 import java.util.List;
 import java.util.Map;
@@ -35,9 +37,9 @@ public interface ITGMediaPlayer {
                               @Nullable Map<String, String> headers, @Nullable List<HttpCookie> cookies);
 
 
-    public void setDataSource(String path, Map<String, String> headers);
+    public void setDataSource(String path, Map<String, String> headers) throws IOException;
 
-    public void setDataSource(String path, Map<String, String> headers, List<HttpCookie> cookies);
+    public void setDataSource(String path, Map<String, String> headers, List<HttpCookie> cookies) throws IOException;
 
     public void setLooping(boolean looping);
 
@@ -45,15 +47,15 @@ public interface ITGMediaPlayer {
 
     public void setVolume(float leftVolume, float rightVolume);
 
-    public void seekTo(int msec, int mode);
+    public void seekTo(long msec, int mode);
 
-    public Metadata getMetaData();
+    public Bundle getMetaData();
 
     public Bitmap getFrameAtTime(int msec, int mode);
 
-    public int getDuration();
+    public long getDuration();
 
-    public int getCurrentPosition();
+    public long getCurrentPosition();
 
     public void start();
 
