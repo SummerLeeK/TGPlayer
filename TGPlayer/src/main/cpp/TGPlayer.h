@@ -12,6 +12,7 @@ extern "C" {
 #include "TGVideo.h"
 #include "TGAudio.h"
 #include "JavaCallHandle.h"
+#include "PlayerListenerCall.h"
 
 
 class TGPlayer {
@@ -19,9 +20,11 @@ public:
     AVFormatContext *formatContext;
     char *path;
     int *playStatus;
-    pthread_t *prepareThread;
+    pthread_t prepareThread;
     TGVideo *tgvideo;
     TGAudio *tgaudio;
+    pthread_mutex_t playerMutex;
+    PlayerListenerCall *listenerCall;
     JavaCallHandle *javaCallHandle;
     int clock;
     bool isPlaying = false;
@@ -35,7 +38,6 @@ public:
     int prepareSync();
 
     int start();
-
 
     int stop();
 

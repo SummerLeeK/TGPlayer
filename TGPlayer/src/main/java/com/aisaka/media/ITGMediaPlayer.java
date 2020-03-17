@@ -1,4 +1,4 @@
-package com.aisaka.aisakaplayer;
+package com.aisaka.media;
 
 import android.content.Context;
 import android.graphics.Bitmap;
@@ -19,7 +19,7 @@ import androidx.annotation.Nullable;
 public interface ITGMediaPlayer {
 
 
-    public void prepare();
+    public void prepare() throws IOException,IllegalStateException;
 
     public void setDisplay(SurfaceHolder sh);
 

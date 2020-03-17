@@ -1,4 +1,4 @@
-package com.aisaka.aisakaplayer;
+package com.aisaka.media;
 
 import android.content.Context;
 import android.graphics.Bitmap;
@@ -42,7 +42,7 @@ public class TGPlayer implements ITGMediaPlayer {
     }
 
     @Override
-    public void prepare() {
+    public void prepare() throws IOException {
         _prepareAsync();
     }
 
@@ -556,7 +556,7 @@ public class TGPlayer implements ITGMediaPlayer {
 
     private native void _setDataSource(String path) throws IOException, IllegalArgumentException, SecurityException, IllegalStateException;
 
-    private native final void _prepareAsync() throws IllegalStateException;
+    private native final void _prepareAsync() throws IOException, IllegalStateException;
 
     private native final void _start();
 

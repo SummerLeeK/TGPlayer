@@ -3,3 +3,7 @@
 //
 
 #include "TGVideo.h"
+
+TGVideo::TGVideo() {
+
+}

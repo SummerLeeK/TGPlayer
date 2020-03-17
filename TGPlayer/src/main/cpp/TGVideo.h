@@ -19,6 +19,7 @@ public:
     int clock;
     PlayerQueue *playerQueue;
 
+    TGVideo();
 };
 
 

@@ -11,6 +11,7 @@
 #include <native_log.h>
 #include "TGPlayer.h"
 #include "JavaCallHandle.h"
+#include "PlayerListenerCall.h"
 
 extern "C" {
 #include <libavcodec/avcodec.h>
@@ -19,16 +20,15 @@ extern "C" {
 }
 
 
-#define JNI_CLASS_TGPLAYER   "com/aisaka/aisakaplayer/TGPlayer"
-
 #define NELEM(x) ((int) (sizeof(x) / sizeof((x)[0])))
 
 
 JavaVM *jvm;
 
 pthread_mutex_t mutex;
-
+jobject globalRefTGPlayer;
 JavaCallHandle *javaCallHandle;
+PlayerListenerCall *listenerCall;
 
 static void setTGPlayerPtr(JNIEnv *env, jobject thiz, void *player) {
 
@@ -69,14 +69,14 @@ static void TGPlayer_setDataSourceAndHeaders(JNIEnv *env, jobject thiz, jstring 
 }
 
 
-static void TGPlayer_setVideoSurface(JNIEnv *env, jobject thiz,jobject surface) {
+static void TGPlayer_setVideoSurface(JNIEnv *env, jobject thiz, jobject surface) {
 
 }
 
 static void TGPlayer_prepareAsync(JNIEnv *env, jobject thiz) {
     TGPlayer *player = getTGPlayerPtr(env, thiz);
 
-    player->prepare();
+    player->prepareSync();
 
 }
 
@@ -101,7 +101,7 @@ static void TGPlayer_isPlaying(JNIEnv *env, jobject thiz) {
 
 }
 
-static jobject TGPlayer_getFrameAtTime(JNIEnv *env, jobject thiz,jlong msec,int mode){
+static jobject TGPlayer_getFrameAtTime(JNIEnv *env, jobject thiz, jlong msec, int mode) {
 
     return NULL;
 }
@@ -138,10 +138,14 @@ static void TGPlayer_native_init(JNIEnv *env, jobject thiz) {
 
 static void TGPlayer_native_setup(JNIEnv *env, jobject thiz) {
 
+
+    globalRefTGPlayer = env->NewGlobalRef(thiz);
     TGPlayer *player = new TGPlayer();
 
-    player->javaCallHandle=javaCallHandle;
-    setTGPlayerPtr(env, thiz, player);
+    listenerCall->initFindClass(globalRefTGPlayer);
+    player->javaCallHandle = javaCallHandle;
+    player->listenerCall = listenerCall;
+    setTGPlayerPtr(env, globalRefTGPlayer, player);
 
 
 }
@@ -155,28 +159,28 @@ static jobject TGPlayer_getMediaMeta(JNIEnv *env, jobject thiz) {
 static JNINativeMethod g_methods[] = {
         {
                 "_setDataSource",
-                                      "(Ljava/lang/String;)V",
-                                                                   (void *) TGPlayer_setDataSourceAndHeaders
+                                       "(Ljava/lang/String;)V",
+                                                                        (void *) TGPlayer_setDataSourceAndHeaders
         },
 //        { "_setDataSourceFd",       "(I)V",     (void *) TGPlayer_setDataSourceFd },
 //        { "_setDataSource",         "(Ltv/danmaku/ijk/media/player/misc/IMediaDataSource;)V", (void *)TGPlayer_setDataSourceCallback },
 //        { "_setAndroidIOCallback",  "(Ltv/danmaku/ijk/media/player/misc/IAndroidIO;)V", (void *)TGPlayer_setAndroidIOCallback },
 
-        {       "_setVideoSurface",   "(Landroid/view/Surface;)V", (void *) TGPlayer_setVideoSurface},
-        {       "_prepareAsync",      "()V",                       (void *) TGPlayer_prepareAsync},
-        {       "_start",             "()V",                       (void *) TGPlayer_start},
-        {       "_stop",              "()V",                       (void *) TGPlayer_stop},
-        {       "_seekTo",             "(JI)V",                      (void *) TGPlayer_seekTo},
-        {       "_pause",             "()V",                       (void *) TGPlayer_pause},
-        {       "_isPlaying",          "()Z",                       (void *) TGPlayer_isPlaying},
-        {       "_getCurrentPosition", "()J",                       (void *) TGPlayer_getCurrentPosition},
-        {       "_getDuration",        "()J",                       (void *) TGPlayer_getDuration},
-        {       "_release",           "()V",                       (void *) TGPlayer_release},
-        {       "_reset",             "()V",                       (void *) TGPlayer_reset},
-        {       "_setVolume",          "(FF)V",                     (void *) TGPlayer_setVolume},
+        {       "_setVideoSurface",    "(Landroid/view/Surface;)V",     (void *) TGPlayer_setVideoSurface},
+        {       "_prepareAsync",       "()V",                           (void *) TGPlayer_prepareAsync},
+        {       "_start",              "()V",                           (void *) TGPlayer_start},
+        {       "_stop",               "()V",                           (void *) TGPlayer_stop},
+        {       "_seekTo",             "(JI)V",                         (void *) TGPlayer_seekTo},
+        {       "_pause",              "()V",                           (void *) TGPlayer_pause},
+        {       "_isPlaying",          "()Z",                           (void *) TGPlayer_isPlaying},
+        {       "_getCurrentPosition", "()J",                           (void *) TGPlayer_getCurrentPosition},
+        {       "_getDuration",        "()J",                           (void *) TGPlayer_getDuration},
+        {       "_release",            "()V",                           (void *) TGPlayer_release},
+        {       "_reset",              "()V",                           (void *) TGPlayer_reset},
+        {       "_setVolume",          "(FF)V",                         (void *) TGPlayer_setVolume},
 //        { "getAudioSessionId",      "()I",      (void *) TGPlayer_getAudioSessionId },
-        {       "native_init",        "()V",                       (void *) TGPlayer_native_init},
-        {       "native_setup",       "(Ljava/lang/Object;)V",     (void *) TGPlayer_native_setup},
+        {       "native_init",         "()V",                           (void *) TGPlayer_native_init},
+        {       "native_setup",        "(Ljava/lang/Object;)V",         (void *) TGPlayer_native_setup},
 //        { "native_finalize",        "()V",      (void *) TGPlayer_native_finalize },
 
 //        { "_setOption",             "(ILjava/lang/String;Ljava/lang/String;)V", (void *) TGPlayer_setOption },
@@ -185,8 +189,8 @@ static JNINativeMethod g_methods[] = {
 //        { "_getColorFormatName",    "(I)Ljava/lang/String;",    (void *) TGPlayer_getColorFormatName },
 //        { "_getVideoCodecInfo",     "()Ljava/lang/String;",     (void *) TGPlayer_getVideoCodecInfo },
 //        { "_getAudioCodecInfo",     "()Ljava/lang/String;",     (void *) TGPlayer_getAudioCodecInfo },
-        {       "_getMetadata",      "()Landroid/os/Bundle;",     (void *) TGPlayer_getMediaMeta},
-        {"_getFrameAtTime","(JI)Landroid/graphics/Bitmap;",(void *) TGPlayer_getFrameAtTime}
+        {       "_getMetadata",        "()Landroid/os/Bundle;",         (void *) TGPlayer_getMediaMeta},
+        {       "_getFrameAtTime",     "(JI)Landroid/graphics/Bitmap;", (void *) TGPlayer_getFrameAtTime}
 //        { "_setLoopCount",          "(I)V",                     (void *) TGPlayer_setLoopCount },
 //        { "_getLoopCount",          "()I",                      (void *) TGPlayer_getLoopCount },
 //        { "_getPropertyFloat",      "(IF)F",                    (void *) ijkMediaPlayer_getPropertyFloat },
@@ -244,8 +248,6 @@ void FFmpeg_init() {
 }
 
 
-
-
 JNIEXPORT jint JNI_OnLoad(JavaVM *vm, void *rev) {
 
     JNIEnv *env = NULL;
@@ -261,7 +263,9 @@ JNIEXPORT jint JNI_OnLoad(JavaVM *vm, void *rev) {
 
     pthread_mutex_init(&mutex, NULL);
 
-    javaCallHandle=new JavaCallHandle(env,vm);
+    javaCallHandle = new JavaCallHandle(env, vm);
+    listenerCall = new PlayerListenerCall(env, vm);
+
     FFmpeg_init();
 
     return JNI_VERSION_1_4;
@@ -273,7 +277,7 @@ JNIEXPORT void JNI_OnUnload(JavaVM *jvm, void *reserved) {
 
     delete javaCallHandle;
 
-    pthread_mutex_destroy(&mutex);
+    delete listenerCall;
 
     pthread_mutex_destroy(&mutex);
 }

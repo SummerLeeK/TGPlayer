@@ -1,4 +1,4 @@
-package com.aisaka.aisakaplayer.utils;
+package com.aisaka.media.utils;
 
 public class Constants {
 

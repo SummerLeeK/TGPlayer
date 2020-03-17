@@ -1,2 +1,2 @@
-include ':app', ':aisakaplayer'
+include ':app', ':TGPlayer'
 rootProject.name='PlayerDemo'

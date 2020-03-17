@@ -8,7 +8,8 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.util.Log;
 
-import com.aisaka.aisakaplayer.TGPlayer;
+
+import com.aisaka.media.TGPlayer;
 
 import java.io.File;
 import java.io.IOException;
@@ -32,7 +33,17 @@ public class MainActivity extends AppCompatActivity {
         } catch (IOException e) {
             Log.e(TAG,"IOException \t"+e.getMessage());
         }
-        player.prepare();
+        player.setOnPreparedListener(new TGPlayer.OnPreparedListener() {
+            @Override
+            public void onPrepared(TGPlayer mp) {
+                Log.e(TAG,"onPrepared finish\t");
+            }
+        });
+        try {
+            player.prepare();
+        } catch (IOException e) {
+            Log.e(TAG,"prepare \t"+e.getMessage());
+        }
 
     }
 }

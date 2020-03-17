@@ -1,5 +1,5 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.aisaka.aisakaplayer" >
+    package="com.aisaka.media" >
 
     <uses-permission android:name="android.permission.INTERNET"></uses-permission>
 
