@@ -18,16 +18,25 @@ extern "C" {
 class TGPlayer {
 public:
     AVFormatContext *formatContext;
+    AVCodecContext *videoCodecContext;
+    AVCodecContext *audioCodecContext;
     char *path;
-    int *playStatus;
+    bool pause;
+    bool exit = false;
+    pthread_t readFrameThread;
     pthread_t prepareThread;
+
     TGVideo *tgvideo;
     TGAudio *tgaudio;
     pthread_mutex_t playerMutex;
     PlayerListenerCall *listenerCall;
     JavaCallHandle *javaCallHandle;
     int clock;
-    bool isPlaying = false;
+
+    int videoStreamIndex;
+
+    int audioStreamIndex;
+
 
     TGPlayer();
 

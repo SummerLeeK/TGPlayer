@@ -21,6 +21,8 @@ public interface ITGMediaPlayer {
 
     public void prepare() throws IOException,IllegalStateException;
 
+    public void prepareSync();
+
     public void setDisplay(SurfaceHolder sh);
 
     public void setSurface(Surface surface);

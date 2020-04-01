@@ -15,13 +15,6 @@ private:
     JavaVM *jvm;
     JNIEnv *env;
     jobject tgPlayer;
-    jobject OnPreparedListener;
-    jobject OnCompletionListener;
-    jobject OnBufferingUpdateListener;
-    jobject OnSeekCompleteListener;
-    jobject OnVideoSizeChanged;
-    jobject OnErrorListener;
-    jobject OnInfoListener;
 
 public:
     PlayerListenerCall(JNIEnv *env,JavaVM *jvm);

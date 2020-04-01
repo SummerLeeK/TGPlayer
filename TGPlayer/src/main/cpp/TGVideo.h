@@ -17,9 +17,21 @@ class TGVideo {
 public:
     AVCodecContext *codecContext;
     int clock;
+    long duration;
     PlayerQueue *playerQueue;
 
+    int videoWidth;
+    int videoHeight;
+
     TGVideo();
+
+    void start();
+
+    void findParams(const AVCodecParameters *parameters);
+
+
+    ~TGVideo();
+
 };
 
 

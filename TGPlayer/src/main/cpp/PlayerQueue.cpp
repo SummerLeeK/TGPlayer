@@ -2,6 +2,7 @@
 // Created by Apple on 2NULL2NULL-NULL3-1NULL.
 //
 
+#include <native_log.h>
 #include "PlayerQueue.h"
 
 PlayerQueue::PlayerQueue() {
@@ -25,6 +26,7 @@ int PlayerQueue::pushPkt(AVPacket *pkt) {
     pthread_cond_signal(&packetCond);
     pthread_mutex_unlock(&packetMutex);
 
+    LOGD("playqueue push packet");
     return 0;
 
 }
@@ -55,7 +57,7 @@ int PlayerQueue::popPkt(AVPacket *pkt) {
 
     pthread_cond_signal(&packetCond);
     pthread_mutex_unlock(&packetMutex);
-
+    LOGD("playqueue pop packet");
     return 0;
 
 }
@@ -101,6 +103,39 @@ int PlayerQueue::popFrame(AVFrame *frame) {
 }
 
 
+int PlayerQueue::getPacketQueueSize() {
+    int size = 0;
+
+    pthread_mutex_lock(&packetMutex);
+
+    size = packetQueue.size();
+    pthread_mutex_unlock(&packetMutex);
+
+    return size;
+
+}
+
+
+int PlayerQueue::getFrameQueueSize() {
+
+    int size = 0;
+
+    pthread_mutex_lock(&frameMutex);
+
+    size = frameQueue.size();
+
+    pthread_mutex_unlock(&frameMutex);
+
+    return size;
+
+}
+
+
+void PlayerQueue::clearPacketQueue() {
+
+    pthread_cond_signal(&packetCond);
+
+}
 PlayerQueue::~PlayerQueue() {
 
     pthread_mutex_destroy(&packetMutex);

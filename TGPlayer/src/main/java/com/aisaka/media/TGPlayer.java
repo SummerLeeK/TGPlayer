@@ -42,10 +42,15 @@ public class TGPlayer implements ITGMediaPlayer {
     }
 
     @Override
-    public void prepare() throws IOException {
+    public void prepareSync() {
         _prepareAsync();
     }
 
+
+    @Override
+    public void prepare() throws IOException {
+        _prepare();
+    }
 
     public void useOpenSLES(boolean use) {
 
@@ -556,7 +561,11 @@ public class TGPlayer implements ITGMediaPlayer {
 
     private native void _setDataSource(String path) throws IOException, IllegalArgumentException, SecurityException, IllegalStateException;
 
-    private native final void _prepareAsync() throws IOException, IllegalStateException;
+    private native final void _prepareAsync();
+
+
+    private native final void _prepare() throws IOException;
+
 
     private native final void _start();
 

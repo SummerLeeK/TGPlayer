@@ -35,11 +35,17 @@ public:
 
     int popPkt(AVPacket *pkt);
 
+    int getPacketQueueSize();
 
     int pushFrame(AVFrame *frame);
 
     int popFrame(AVFrame *frame);
 
+    int getFrameQueueSize();
+
+    void clearFrameQueue();
+
+    void clearPacketQueue();
     ~PlayerQueue();
 };
 

@@ -16,9 +16,9 @@ public:
 
     void invokeVoidMethod(jobject obi, jclass clazz, const char *methodName, const char *sig,va_list vl);
 
-    int throwException(const char* exceptionClass, const char *message);
+    void throwException(const char* exceptionClass, const char *message);
 
-    int throwException(int type);
+    void throwException(int type);
 
 };
 

@@ -80,8 +80,17 @@ static void TGPlayer_prepareAsync(JNIEnv *env, jobject thiz) {
 
 }
 
-static void TGPlayer_start(JNIEnv *env, jobject thiz) {
+static void TGPlayer_prepare(JNIEnv *env, jobject thiz) {
+    TGPlayer *player = getTGPlayerPtr(env, thiz);
 
+    player->prepare();
+
+}
+
+static void TGPlayer_start(JNIEnv *env, jobject thiz) {
+    TGPlayer *player = getTGPlayerPtr(env, thiz);
+
+    player->start();
 }
 
 static void TGPlayer_stop(JNIEnv *env, jobject thiz) {
@@ -167,6 +176,8 @@ static JNINativeMethod g_methods[] = {
 //        { "_setAndroidIOCallback",  "(Ltv/danmaku/ijk/media/player/misc/IAndroidIO;)V", (void *)TGPlayer_setAndroidIOCallback },
 
         {       "_setVideoSurface",    "(Landroid/view/Surface;)V",     (void *) TGPlayer_setVideoSurface},
+
+                {       "_prepare",       "()V",                           (void *) TGPlayer_prepare},
         {       "_prepareAsync",       "()V",                           (void *) TGPlayer_prepareAsync},
         {       "_start",              "()V",                           (void *) TGPlayer_start},
         {       "_stop",               "()V",                           (void *) TGPlayer_stop},

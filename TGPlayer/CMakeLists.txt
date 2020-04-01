@@ -7,6 +7,8 @@ cmake_minimum_required(VERSION 3.4.1)
 
 include_directories(src/main/cpp/include)
 include_directories(src/main/cpp)
+include_directories(src/main/cpp/audio)
+include_directories(src/main/cpp/video)
 set(distribution_DIR ${CMAKE_SOURCE_DIR}/../../../libs)
 
 #添加libavcodec-57.so
@@ -64,7 +66,8 @@ set_target_properties( swscale
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++11")
 
 
-
+aux_source_directory(src/main/cpp/video NATVIE_SOURCE_VIDEO)
+aux_source_directory(src/main/cpp/audio NATVIE_SOURCE_AUDIO)
 aux_source_directory(src/main/cpp NATVIE_SOURCE)
 
 add_library( # Sets the name of the library.
@@ -74,6 +77,9 @@ add_library( # Sets the name of the library.
         SHARED
 
         ${NATVIE_SOURCE}
+        ${NATVIE_SOURCE_VIDEO}
+        ${NATVIE_SOURCE_AUDIO}
+
 )
 
 

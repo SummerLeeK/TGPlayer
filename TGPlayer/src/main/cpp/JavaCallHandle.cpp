@@ -20,23 +20,24 @@ JavaCallHandle::invokeVoidMethod(jobject obj, jclass clazz, const char *methodNa
     env->CallVoidMethod(obj, jmethodId, vl);
 }
 
-int JavaCallHandle::throwException(const char *exceptionClass, const char *message) {
+void JavaCallHandle::throwException(const char *exceptionClass, const char *message) {
    int result= vm->AttachCurrentThread(&env, NULL);
 
    LOGE("JavaCallHandle throwException AttachCurrentThread = %d",result);
     jclass exception = env->FindClass(exceptionClass);
     if (exception != NULL) {
-        return env->ThrowNew(exception, message);
+         env->ThrowNew(exception, message);
     }
 
     vm->DetachCurrentThread();
-    return -1;
+
 
 }
 
-int JavaCallHandle::throwException(int type) {
+void JavaCallHandle::throwException(int type) {
     if (type == -5) {
         jclass ioException = env->FindClass(IOException);
-        return env->ThrowNew(ioException, "I/O error");
+         env->ThrowNew(ioException, "I/O error");
     }
+
 }
