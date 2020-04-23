@@ -51,7 +51,7 @@ static TGPlayer *getTGPlayerPtr(JNIEnv *env, jobject thiz) {
     long ptr = env->GetLongField(thiz, playerPtr);
 
 
-    LOGD("%ld", ptr);
+    LOGE("%ld", ptr);
 
     return reinterpret_cast<TGPlayer *>(ptr);
 

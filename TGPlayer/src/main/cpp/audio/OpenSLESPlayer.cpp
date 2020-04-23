@@ -232,5 +232,16 @@ int OpenSLESPlayer::setVolume(float left, float right) {
     return 0;
 }
 
+int OpenSLESPlayer::pause() {
+
+    return 0;
+}
+
+
+int OpenSLESPlayer::enqueueData(void *buf, int size) {
+
+
+    return 0;
+}
 
 

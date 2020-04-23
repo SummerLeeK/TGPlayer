@@ -9,8 +9,8 @@ extern "C" {
 #include <libavformat/avformat.h>
 };
 
-#include "TGVideo.h"
-#include "TGAudio.h"
+#include "DecodeVideo.h"
+#include "DecodeAudio.h"
 #include "JavaCallHandle.h"
 #include "PlayerListenerCall.h"
 
@@ -26,11 +26,13 @@ public:
     pthread_t readFrameThread;
     pthread_t prepareThread;
 
-    TGVideo *tgvideo;
-    TGAudio *tgaudio;
+
+    DecodeVideo *decodeVideo;
+    DecodeAudio *decodeAudio;
     pthread_mutex_t playerMutex;
     PlayerListenerCall *listenerCall;
     JavaCallHandle *javaCallHandle;
+    BaseAudioPlayer *audioPlayer;
     int clock;
 
     int videoStreamIndex;
@@ -49,6 +51,8 @@ public:
     int start();
 
     int stop();
+
+
 
 
 };

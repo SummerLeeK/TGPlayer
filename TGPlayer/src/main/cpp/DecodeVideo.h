@@ -2,8 +2,8 @@
 // Created by Apple on 2020-02-27.
 //
 
-#ifndef PLAYERDEMO_TGVIDEO_H
-#define PLAYERDEMO_TGVIDEO_H
+#ifndef PLAYERDEMO_DECODEVIDEO_H
+#define PLAYERDEMO_DECODEVIDEO_H
 
 
 #include "PlayerQueue.h"
@@ -13,21 +13,23 @@ extern "C" {
 };
 
 
-class TGVideo {
+class DecodeVideo {
 public:
     AVCodecContext *codecContext;
     int clock;
     long duration;
     PlayerQueue *playerQueue;
-
+    pthread_t audioDecodeThread;
+    pthread_t videoDecodeThread;
     int videoWidth;
     int videoHeight;
+    AVCodecParameters *params;
 
-    TGVideo();
+    DecodeVideo(const AVCodecParameters *params);
 
     void start();
 
-    void findParams(const AVCodecParameters *parameters);
+
 
 
     ~TGVideo();
@@ -35,4 +37,4 @@ public:
 };
 
 
-#endif //PLAYERDEMO_TGVIDEO_H
+#endif //PLAYERDEMO_DECODEVIDEO_H

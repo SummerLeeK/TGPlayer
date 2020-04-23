@@ -37,7 +37,7 @@ public class MainActivity extends AppCompatActivity {
 
         TGPlayer player = new TGPlayer();
         try {
-            player.setDataSource(path, null, null);
+            player.setDataSource(path,null);
         } catch (IOException e) {
             Log.e(TAG, "IOException \t" + e.getMessage());
         }
@@ -45,7 +45,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onPrepared(TGPlayer mp) {
                 textView.setText("onPrepared finished");
-//                mp.start();
+                mp.start();
             }
         });
 
@@ -57,6 +57,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
         player.prepareSync();
+
 //        long time=System.currentTimeMillis();
 //        try {
 //            player.prepare();

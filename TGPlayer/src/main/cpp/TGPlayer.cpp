@@ -18,7 +18,7 @@ TGPlayer::TGPlayer() {
 
 }
 
-int findAVCodecContext(void* data) {
+int findAVCodecContext(void *data) {
     TGPlayer *player = reinterpret_cast<TGPlayer *>(data);
 
     int videoStreamIndex = av_find_best_stream(player->formatContext, AVMEDIA_TYPE_VIDEO, -1, -1,
@@ -30,7 +30,7 @@ int findAVCodecContext(void* data) {
     if (videoStreamIndex >= 0) {
 
         player->videoStreamIndex = videoStreamIndex;
-        player->tgvideo = new TGVideo();
+
 
         AVCodecParameters *parameters = player->formatContext->streams[videoStreamIndex]->codecpar;
         AVCodec *codec = avcodec_find_decoder(parameters->codec_id);
@@ -41,10 +41,11 @@ int findAVCodecContext(void* data) {
             player->javaCallHandle->throwException(IOException, msg);
             return -1;
         }
+        player->decodeVideo = new DecodeVideo(parameters);
 
         player->videoCodecContext = avcodec_alloc_context3(codec);
 
-        player->tgvideo->duration = player->formatContext->streams[videoStreamIndex]->duration;
+        player->decodeVideo->duration = player->formatContext->streams[videoStreamIndex]->duration;
 
         if (player->videoCodecContext == NULL) {
             char msg[100];
@@ -55,8 +56,8 @@ int findAVCodecContext(void* data) {
         }
 
 
-        LOGE("video bits_per_raw_sample %d",parameters->bits_per_raw_sample);
-        player->listenerCall->invokeVideoSize(parameters->width,parameters->height);
+        LOGE("video bits_per_raw_sample %d", parameters->bits_per_raw_sample);
+        player->listenerCall->invokeVideoSize(parameters->width, parameters->height);
 
 
     }
@@ -66,7 +67,7 @@ int findAVCodecContext(void* data) {
 
     if (audioStreamIndex > 0) {
         player->audioStreamIndex = audioStreamIndex;
-        player->tgaudio = new TGAudio(true);
+
 
 
         AVCodecParameters *parameters = player->formatContext->streams[audioStreamIndex]->codecpar;
@@ -80,13 +81,13 @@ int findAVCodecContext(void* data) {
             return -1;
         }
 
-        player->tgaudio->findParams(parameters);
+        player->decodeAudio = new DecodeAudio(true,parameters);
 
         player->audioCodecContext = avcodec_alloc_context3(code);
 
-        player->tgaudio->duration = player->formatContext->streams[audioStreamIndex]->duration;
+        player->decodeAudio->duration = player->formatContext->streams[audioStreamIndex]->duration;
 
-        LOGE("audiof bits_per_raw_sample %d",parameters->bits_per_raw_sample);
+        LOGE("audiof bits_per_raw_sample %d", parameters->bits_per_raw_sample);
         if (player->audioCodecContext == NULL) {
 
             char msg[100];
@@ -121,7 +122,7 @@ void *preparing(void *data) {
 
     int result = 0;
     TGPlayer *player = reinterpret_cast<TGPlayer *>(data);
-
+    AVDictionary *dict = NULL;
     player->formatContext = avformat_alloc_context();
 
     if (player->formatContext == NULL) {
@@ -130,11 +131,11 @@ void *preparing(void *data) {
                                                "setDataSource maybe not complete true");
         goto complete;
     }
-    AVDictionary *dict;
+
     av_dict_set(&dict, "max_delay", "30000000", 0);
 
 
-    result = avformat_open_input(&player->formatContext, player->path, NULL, &dict);
+    result = avformat_open_input(&player->formatContext, player->path, NULL, NULL);
 
 
     if (result < 0) {
@@ -172,6 +173,7 @@ void *preparing(void *data) {
     player->listenerCall->invokePrepared();
 
     LOGD("TGPlayer prepare finish");
+
     complete:
     pthread_exit(&player->prepareThread);
 }
@@ -267,12 +269,12 @@ void *readFrame(void *data) {
         }
 
 
-        if (player->tgaudio != NULL && player->tgaudio->playerQueue->packetQueue.size() > 100) {
+        if (player->decodeAudio != NULL && player->decodeAudio->playerQueue->packetQueue.size() > 100) {
             av_usleep(1000 * 100);
             continue;
         }
 
-        if (player->tgvideo != NULL && player->tgvideo->playerQueue->packetQueue.size() > 100) {
+        if (player->decodeVideo != NULL && player->decodeVideo->playerQueue->packetQueue.size() > 100) {
             av_usleep(1000 * 100);
             continue;
         }
@@ -282,9 +284,9 @@ void *readFrame(void *data) {
 
         if (ret == 0) {
             if (packet->stream_index == player->videoStreamIndex) {
-                player->tgvideo->playerQueue->pushPkt(packet);
+                player->decodeVideo->playerQueue->pushPkt(packet);
             } else if (packet->stream_index == player->audioStreamIndex) {
-                player->tgvideo->playerQueue->pushPkt(packet);
+                player->decodeAudio->playerQueue->pushPkt(packet);
             } else {
                 av_packet_free(&packet);
                 av_free(packet);
@@ -295,8 +297,8 @@ void *readFrame(void *data) {
             av_free(packet);
             packet = NULL;
 
-            if ((player->tgvideo != NULL && player->tgvideo->playerQueue->frameQueue.empty()) ||
-                (player->tgaudio != NULL && player->tgaudio->playerQueue->frameQueue.empty())) {
+            if ((player->decodeVideo != NULL && player->decodeVideo->playerQueue->frameQueue.empty()) ||
+                (player->decodeAudio != NULL && player->decodeAudio->playerQueue->frameQueue.empty())) {
                 player->exit = true;
             }
         }
@@ -308,12 +310,23 @@ void *readFrame(void *data) {
     pthread_exit(&player->readFrameThread);
 }
 
+
+
 int TGPlayer::start() {
 
     pthread_mutex_lock(&playerMutex);
 
     pthread_create(&readFrameThread, NULL, readFrame, this);
 
+
+    decodeVideo->start();
+
+    decodeAudio->start();
+
+
     pthread_mutex_unlock(&playerMutex);
     return 0;
 }
+
+
+

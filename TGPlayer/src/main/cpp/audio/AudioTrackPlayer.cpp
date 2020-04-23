@@ -15,3 +15,21 @@ int AudioTrackPlayer::initPlayer(const AVCodecParameters *parameters) {
 int AudioTrackPlayer::setVolume(float left, float right) {
     return 0;
 }
+
+int AudioTrackPlayer::start() {
+    return 0;
+}
+
+
+int AudioTrackPlayer::pause() {
+    return 0;
+}
+
+int AudioTrackPlayer::stop() {
+    return 0;
+}
+
+int AudioTrackPlayer::enqueueData(void *buf, int size) {
+    return 0;
+}
+
