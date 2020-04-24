@@ -62,6 +62,35 @@ int PlayerQueue::popPkt(AVPacket *pkt) {
 
 }
 
+int PlayerQueue::getPkt(AVPacket *pkt) {
+    pthread_mutex_lock(&packetMutex);
+
+
+    while (true) {
+
+        if (packetQueue.size() > 0) {
+            AVPacket *packet = packetQueue.front();
+
+            av_packet_ref(pkt, packet);
+
+            av_packet_free(&packet);
+            av_free(packet);
+            packet = NULL;
+            break;
+        } else {
+            pthread_cond_wait(&packetCond, &packetMutex);
+        }
+
+    }
+
+    pthread_cond_signal(&packetCond);
+    pthread_mutex_unlock(&packetMutex);
+    LOGD("playqueue pop packet");
+    return 0;
+
+}
+
+
 
 int PlayerQueue::pushFrame(AVFrame *frame) {
 

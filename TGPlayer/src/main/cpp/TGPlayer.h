@@ -9,6 +9,8 @@ extern "C" {
 #include <libavformat/avformat.h>
 };
 
+#include <video/BaseVideoPlayer.h>
+#include <audio/BaseAudioPlayer.h>
 #include "DecodeVideo.h"
 #include "DecodeAudio.h"
 #include "JavaCallHandle.h"
@@ -27,12 +29,12 @@ public:
     pthread_t prepareThread;
 
 
-    DecodeVideo *decodeVideo;
-    DecodeAudio *decodeAudio;
+
     pthread_mutex_t playerMutex;
     PlayerListenerCall *listenerCall;
     JavaCallHandle *javaCallHandle;
     BaseAudioPlayer *audioPlayer;
+    BaseVideoPlayer *videoPlayer;
     int clock;
 
     int videoStreamIndex;

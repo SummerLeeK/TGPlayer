@@ -26,8 +26,8 @@ public:
 
     OpenSLESPlayer();
 
-    int initPlayer(const AVCodecParameters *parameters);
 
+    int initPlayer(AVCodecContext *codecContext, const AVCodecParameters *parameters);
 
     int start();
 
@@ -40,6 +40,7 @@ public:
     int setVolume(float left, float right);
 
     ~OpenSLESPlayer();
+
 
 };
 

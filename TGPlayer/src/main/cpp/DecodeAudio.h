@@ -6,31 +6,33 @@
 #define PLAYERDEMO_DECODEAUDIO_H
 
 
-#include <libswresample/swresample.h>
+
 #include "PlayerQueue.h"
-#include "audio/OpenSLESPlayer.h"
+
+#include <pthread.h>
+#include <native_log.h>
+
+extern "C" {
+#include <libswresample/swresample.h>
+}
 
 class DecodeAudio {
 public:
-    long duration;
-    int channel;
-    int bitRatePerFrame;
-    int channelLayout;
-    int sample_rate;
-    int sample_fmt;
-    int clock;
-    int type;
     SwrContext *swrContext;
     AVCodecContext *codecContext;
-    BaseAudioPlayer *audioPlayer;
+
+    uint8_t *buf;
     PlayerQueue *playerQueue;
 
-    pthread_t decodeThread;
     AVCodecParameters *params;
+    bool isNewPacket= true;
 
-    DecodeAudio(bool useOpenSLES,AVCodecParameters *params,AVCodecContext *codecContext);
 
-    void start();
+    DecodeAudio(const AVCodecParameters *params,AVCodecContext *codecContext);
+
+    int open_codec();
+
+    int getPcmData(uint8_t ** pcm);
 
     ~DecodeAudio();
 };

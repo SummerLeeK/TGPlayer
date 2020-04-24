@@ -12,7 +12,7 @@ class AudioTrackPlayer : public BaseAudioPlayer {
 public:
     AudioTrackPlayer();
 
-    int initPlayer(const AVCodecParameters *parameters);
+    int initPlayer(AVCodecContext *codecContext,const AVCodecParameters *parameters);
 
     int start();
 

@@ -3,9 +3,12 @@
 //
 
 #include <native_log.h>
+#include <audio/OpenSLESPlayer.h>
 
 extern "C" {
 #include <libavutil/time.h>
+#include <libavutil/mem.h>
+#include <libavutil/channel_layout.h>
 }
 
 #include "TGPlayer.h"
@@ -41,11 +44,9 @@ int findAVCodecContext(void *data) {
             player->javaCallHandle->throwException(IOException, msg);
             return -1;
         }
-        player->decodeVideo = new DecodeVideo(parameters);
+
 
         player->videoCodecContext = avcodec_alloc_context3(codec);
-
-        player->decodeVideo->duration = player->formatContext->streams[videoStreamIndex]->duration;
 
         if (player->videoCodecContext == NULL) {
             char msg[100];
@@ -81,11 +82,12 @@ int findAVCodecContext(void *data) {
             return -1;
         }
 
-        player->decodeAudio = new DecodeAudio(true,parameters);
 
         player->audioCodecContext = avcodec_alloc_context3(code);
 
-        player->decodeAudio->duration = player->formatContext->streams[audioStreamIndex]->duration;
+        player->audioPlayer=new OpenSLESPlayer();
+
+        player->audioPlayer->initPlayer(player->audioCodecContext,parameters);
 
         LOGE("audiof bits_per_raw_sample %d", parameters->bits_per_raw_sample);
         if (player->audioCodecContext == NULL) {
@@ -269,12 +271,12 @@ void *readFrame(void *data) {
         }
 
 
-        if (player->decodeAudio != NULL && player->decodeAudio->playerQueue->packetQueue.size() > 100) {
+        if (player->audioPlayer != NULL && player->audioPlayer->decodeAudio->playerQueue->packetQueue.size() > 100) {
             av_usleep(1000 * 100);
             continue;
         }
 
-        if (player->decodeVideo != NULL && player->decodeVideo->playerQueue->packetQueue.size() > 100) {
+        if (player->videoPlayer != NULL && player->videoPlayer->decodeVideo->playerQueue->packetQueue.size() > 100) {
             av_usleep(1000 * 100);
             continue;
         }
@@ -284,9 +286,9 @@ void *readFrame(void *data) {
 
         if (ret == 0) {
             if (packet->stream_index == player->videoStreamIndex) {
-                player->decodeVideo->playerQueue->pushPkt(packet);
+                player->videoPlayer->decodeVideo->playerQueue->pushPkt(packet);
             } else if (packet->stream_index == player->audioStreamIndex) {
-                player->decodeAudio->playerQueue->pushPkt(packet);
+                player->audioPlayer->decodeAudio->playerQueue->pushPkt(packet);
             } else {
                 av_packet_free(&packet);
                 av_free(packet);
@@ -297,8 +299,8 @@ void *readFrame(void *data) {
             av_free(packet);
             packet = NULL;
 
-            if ((player->decodeVideo != NULL && player->decodeVideo->playerQueue->frameQueue.empty()) ||
-                (player->decodeAudio != NULL && player->decodeAudio->playerQueue->frameQueue.empty())) {
+            if ((player->videoPlayer != NULL && player->videoPlayer->decodeVideo->playerQueue->frameQueue.empty()) ||
+                (player->audioPlayer != NULL && player->audioPlayer->decodeAudio->playerQueue->frameQueue.empty())) {
                 player->exit = true;
             }
         }
@@ -319,10 +321,7 @@ int TGPlayer::start() {
     pthread_create(&readFrameThread, NULL, readFrame, this);
 
 
-    decodeVideo->start();
-
-    decodeAudio->start();
-
+    audioPlayer->start();
 
     pthread_mutex_unlock(&playerMutex);
     return 0;

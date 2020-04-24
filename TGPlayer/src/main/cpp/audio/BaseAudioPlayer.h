@@ -5,6 +5,8 @@
 #ifndef PLAYERDEMO_BASEAUDIOPLAYER_H
 #define PLAYERDEMO_BASEAUDIOPLAYER_H
 
+#include <DecodeAudio.h>
+
 extern "C" {
 #include <libavcodec/avcodec.h>
 };
@@ -15,9 +17,20 @@ typedef struct {
 }PCMData;
 class BaseAudioPlayer {
 public:
-    virtual int initPlayer(const AVCodecParameters *parameters) {
+    DecodeAudio* decodeAudio;
+    uint8_t *buffer = NULL;
+    int dst_channel_layout=AV_CH_LAYOUT_STEREO;
+    AVSampleFormat dst_fmt=AV_SAMPLE_FMT_S16;
+    int dst_channels;
+//    音频采样率
+    int dst_sample_rate;
+//    音频时钟
+    double clock=0;
+    virtual int initPlayer(AVCodecContext *codecContext,const AVCodecParameters *parameters) {
         return 0;
     };
+
+
 
     virtual int start() { return 0; };
 

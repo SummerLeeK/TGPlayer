@@ -8,7 +8,7 @@ DecodeVideo::DecodeVideo(const AVCodecParameters *parameters) {
     playerQueue=new PlayerQueue;
 }
 
-DecodeVideo::~TGVideo() {
+DecodeVideo::~DecodeVideo() {
     delete playerQueue;
 }
 

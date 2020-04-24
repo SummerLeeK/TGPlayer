@@ -7,10 +7,24 @@
 #include <native_log.h>
 #include "OpenSLESPlayer.h"
 
+extern "C" {
+
+#include <libavutil/channel_layout.h>
+}
 
 void pcmPlayCallBack(SLAndroidSimpleBufferQueueItf bq, void *data) {
-    PCMData *pcmdata = reinterpret_cast<PCMData *>(data);
-    (*bq)->Enqueue(bq, pcmdata->data, pcmdata->size);
+    OpenSLESPlayer *player = reinterpret_cast<OpenSLESPlayer *>(data);
+    int nb_sample = player->decodeAudio->getPcmData(&player->buffer);
+
+    int dataSize=player->dst_channels*nb_sample* av_get_bytes_per_sample(player->dst_fmt);
+
+    if (dataSize>0&&player->buffer!=NULL){
+        //每一秒的音频大小=采样率*声道数*采样深度(位数 16位=2个字节)
+        double time=dataSize/((double)(player->dst_sample_rate*player->dst_channels)*2);
+        player->clock+=time;
+        (*bq)->Enqueue(bq,player->buffer,dataSize);
+    }
+
 }
 
 OpenSLESPlayer::OpenSLESPlayer() {
@@ -66,21 +80,27 @@ void convertToSampleFormat(SLAndroidDataFormat_PCM_EX *androidDataFormatPcmEx,
     androidDataFormatPcmEx->formatType = SL_DATAFORMAT_PCM;
     androidDataFormatPcmEx->sampleRate = getSampleRate(parameters->sample_rate);
 
-    if (parameters->channels <= 1) {
-        androidDataFormatPcmEx->numChannels = 1;
-        androidDataFormatPcmEx->channelMask = SL_SPEAKER_FRONT_LEFT;
-    } else {
-        androidDataFormatPcmEx->numChannels = 2;
-        androidDataFormatPcmEx->channelMask = SL_SPEAKER_FRONT_LEFT | SL_SPEAKER_FRONT_RIGHT;
-    }
+//    if (parameters->channels <= 1) {
+//        androidDataFormatPcmEx->numChannels = 1;
+//        androidDataFormatPcmEx->channelMask = SL_SPEAKER_FRONT_LEFT;
+//    } else {
+//
+//    }
 
+    androidDataFormatPcmEx->numChannels = 2;
+    androidDataFormatPcmEx->channelMask = SL_SPEAKER_FRONT_LEFT | SL_SPEAKER_FRONT_RIGHT;
 
     androidDataFormatPcmEx->containerSize = SL_PCMSAMPLEFORMAT_FIXED_16;
     androidDataFormatPcmEx->bitsPerSample = SL_PCMSAMPLEFORMAT_FIXED_16;
 
 }
 
-int OpenSLESPlayer::initPlayer(const AVCodecParameters *parameters) {
+int OpenSLESPlayer::initPlayer(AVCodecContext *codecContext, const AVCodecParameters *parameters) {
+
+
+    decodeAudio = new DecodeAudio(parameters, codecContext);
+    decodeAudio->open_codec();
+
     //创建引擎接口
     SLresult result = slCreateEngine(&engineItf, 0, NULL, 0, NULL, NULL);
     if (result != SL_BOOLEAN_TRUE) {
@@ -116,6 +136,11 @@ int OpenSLESPlayer::initPlayer(const AVCodecParameters *parameters) {
 
 
     convertToSampleFormat(&formatPcmEx, parameters);
+
+
+    dst_channels=av_get_channel_layout_nb_channels(dst_channel_layout);
+
+    dst_sample_rate=parameters->sample_rate;
 
     SLDataSource dataSource = {&loc_bufq, &formatPcmEx};
 
@@ -200,6 +225,9 @@ int OpenSLESPlayer::start() {
     if (result != SL_RESULT_SUCCESS) {
         return -1;
     }
+
+
+    pcmPlayCallBack(playBufferQueueItf, this);
 
 
     return 0;

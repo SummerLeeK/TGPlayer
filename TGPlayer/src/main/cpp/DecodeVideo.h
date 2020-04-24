@@ -27,12 +27,11 @@ public:
 
     DecodeVideo(const AVCodecParameters *params);
 
-    void start();
+    int open_codec();
 
 
 
-
-    ~TGVideo();
+    ~DecodeVideo();
 
 };
 

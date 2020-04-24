@@ -35,6 +35,8 @@ public:
 
     int popPkt(AVPacket *pkt);
 
+    int getPkt(AVPacket *pkt);
+
     int getPacketQueueSize();
 
     int pushFrame(AVFrame *frame);

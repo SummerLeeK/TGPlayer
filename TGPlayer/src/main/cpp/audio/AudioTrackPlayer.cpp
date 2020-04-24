@@ -8,7 +8,7 @@ AudioTrackPlayer::AudioTrackPlayer() {
 
 }
 
-int AudioTrackPlayer::initPlayer(const AVCodecParameters *parameters) {
+int AudioTrackPlayer::initPlayer(AVCodecContext *codecContext,const AVCodecParameters *parameters) {
     return 0;
 }
 
