@@ -9,10 +9,9 @@
 
 class JavaCallHandle {
 public:
-    JNIEnv *env;
     JavaVM *vm;
 
-    JavaCallHandle(JNIEnv *env,JavaVM *vm);
+    JavaCallHandle(JavaVM *vm);
 
     void invokeVoidMethod(jobject obi, jclass clazz, const char *methodName, const char *sig,va_list vl);
 

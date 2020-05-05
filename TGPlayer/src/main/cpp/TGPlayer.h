@@ -26,6 +26,7 @@ public:
     bool pause;
     bool exit = false;
     pthread_t readFrameThread;
+    pthread_t playThread;
     pthread_t prepareThread;
 
 

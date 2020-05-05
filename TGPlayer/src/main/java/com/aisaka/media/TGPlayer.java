@@ -4,6 +4,9 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
+import android.os.Message;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.view.Surface;
@@ -22,8 +25,17 @@ import androidx.annotation.Nullable;
 
 public class TGPlayer implements ITGMediaPlayer {
 
-
+    public static final int CODE_ONPREPARED=0x1;
+    public static final int CODE_ONERROR=0x2;
+    public static final int CODE_ONCOMPLETE=0x2;
     private long playerPtr;
+
+    private Handler handler=new Handler(Looper.getMainLooper()){
+        @Override
+        public void handleMessage(Message msg) {
+            super.handleMessage(msg);
+        }
+    };
 
     static {
         System.loadLibrary("avutil");
@@ -42,7 +54,7 @@ public class TGPlayer implements ITGMediaPlayer {
     }
 
     @Override
-    public void prepareSync() {
+    public void prepareAsync() {
         _prepareAsync();
     }
 
@@ -390,7 +402,7 @@ public class TGPlayer implements ITGMediaPlayer {
          * Returning false, or not having an OnErrorListener at all, will
          * cause the OnCompletionListener to be called.
          */
-        boolean onError(TGPlayer mp, int what, int extra);
+        void onError(TGPlayer mp, int what, String msg);
     }
 
     /**

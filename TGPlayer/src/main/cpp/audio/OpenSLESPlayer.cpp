@@ -29,7 +29,7 @@ void pcmPlayCallBack(SLAndroidSimpleBufferQueueItf bq, void *data) {
 
 OpenSLESPlayer::OpenSLESPlayer() {
 
-
+LOGE("OpenSLESPlayer construction %s","");
 }
 
 OpenSLESPlayer::~OpenSLESPlayer() {
@@ -97,37 +97,43 @@ void convertToSampleFormat(SLAndroidDataFormat_PCM_EX *androidDataFormatPcmEx,
 
 int OpenSLESPlayer::initPlayer(AVCodecContext *codecContext, const AVCodecParameters *parameters) {
 
-
+    LOGE("OpenSLESPlayer initPlayer %s","");
     decodeAudio = new DecodeAudio(parameters, codecContext);
     decodeAudio->open_codec();
 
     //创建引擎接口
     SLresult result = slCreateEngine(&engineItf, 0, NULL, 0, NULL, NULL);
-    if (result != SL_BOOLEAN_TRUE) {
+    if (result != SL_RESULT_SUCCESS) {
+        LOGE("slCreateEngine failed %d",result);
         return -1;
     }
 
 //    引擎接口初始化
     result = (*engineItf)->Realize(engineItf, SL_BOOLEAN_FALSE);
-    if (result != SL_BOOLEAN_TRUE) {
+    if (result != SL_RESULT_SUCCESS) {
+        LOGE("engineItf Realize failed %d",result);
         return -1;
     }
 
     //实例化引擎
     result = (*engineItf)->GetInterface(engineItf, SL_IID_ENGINE, &slEngineItf);
-    if (result != SL_BOOLEAN_TRUE) {
+    if (result != SL_RESULT_SUCCESS) {
+        LOGE("slEngineItf GetInterface failed %d",result);
         return -1;
     }
 
-
+    const SLInterfaceID outputMixItfids[] = {SL_IID_VOLUME};
+    const SLboolean outputMixItfreq[] = {SL_BOOLEAN_FALSE};
     //创建混音器
-    result = (*slEngineItf)->CreateOutputMix(slEngineItf, &outputMixItf, 0, NULL, NULL);
-    if (result != SL_BOOLEAN_TRUE) {
+    result = (*slEngineItf)->CreateOutputMix(slEngineItf, &outputMixItf, 0, outputMixItfids, outputMixItfreq);
+    if (result != SL_RESULT_SUCCESS) {
+        LOGE("slEngineItf CreateOutputMix failed %d",result);
         return -1;
     }
 
     result = (*outputMixItf)->Realize(outputMixItf, SL_BOOLEAN_FALSE);
-    if (result != SL_BOOLEAN_TRUE) {
+    if (result != SL_RESULT_SUCCESS) {
+        LOGE("outputMixItf Realize failed %d",result);
         return -1;
     }
 
@@ -146,7 +152,7 @@ int OpenSLESPlayer::initPlayer(AVCodecContext *codecContext, const AVCodecParame
 
     SLDataLocator_OutputMix locatorOutputMix = {SL_DATALOCATOR_OUTPUTMIX, outputMixItf};
 
-    SLDataSink dataSink = {&outputMixItf, NULL};
+    SLDataSink dataSink = {&locatorOutputMix, NULL};
 
     SLInterfaceID ids[2] = {SL_IID_BUFFERQUEUE, SL_IID_VOLUME};
     SLboolean req[2] = {SL_BOOLEAN_TRUE, SL_BOOLEAN_TRUE};
@@ -155,7 +161,7 @@ int OpenSLESPlayer::initPlayer(AVCodecContext *codecContext, const AVCodecParame
                                                &dataSink, 2,
                                                ids, req);
 
-    if (result < 0) {
+    if (result !=SL_RESULT_SUCCESS) {
         LOGE("OpenSLES CreateAudioPlayer failed error code = %d", result);
         return -1;
     }
@@ -163,7 +169,7 @@ int OpenSLESPlayer::initPlayer(AVCodecContext *codecContext, const AVCodecParame
     result = (*playerObjectItf)->Realize(playerObjectItf, SL_BOOLEAN_FALSE);
 
 
-    if (result < 0) {
+    if (result !=SL_RESULT_SUCCESS) {
         LOGE("OpenSLES AudioPlayer Realize failed error code = %d", result);
         return -1;
     }
@@ -171,7 +177,7 @@ int OpenSLESPlayer::initPlayer(AVCodecContext *codecContext, const AVCodecParame
 
     result = (*playerObjectItf)->GetInterface(playerObjectItf, SL_IID_PLAY, &playItf);
 
-    if (result < 0) {
+    if (result!=SL_RESULT_SUCCESS) {
         LOGE("OpenSLES AudioPlayer Realize failed error code = %d", result);
         return -1;
     }
@@ -180,7 +186,7 @@ int OpenSLESPlayer::initPlayer(AVCodecContext *codecContext, const AVCodecParame
     result = (*playerObjectItf)->GetInterface(playerObjectItf, SL_IID_BUFFERQUEUE,
                                               &playBufferQueueItf);
 
-    if (result < 0) {
+    if (result !=SL_RESULT_SUCCESS) {
         LOGE("OpenSLES AudioPlayer GetInterface SL_IID_BUFFERQUEUE failed error code = %d", result);
         return -1;
     }
@@ -188,7 +194,7 @@ int OpenSLESPlayer::initPlayer(AVCodecContext *codecContext, const AVCodecParame
 
     result = (*playBufferQueueItf)->RegisterCallback(playBufferQueueItf, pcmPlayCallBack, this);
 
-    if (result < 0) {
+    if (result !=SL_RESULT_SUCCESS) {
         LOGE("OpenSLES playBufferQueueItf RegisterCallback failed error code = %d", result);
         return -1;
     }
@@ -196,7 +202,7 @@ int OpenSLESPlayer::initPlayer(AVCodecContext *codecContext, const AVCodecParame
 
     result = (*playItf)->SetPlayState(playItf, SL_PLAYSTATE_STOPPED);
 
-    if (result < 0) {
+    if (result !=SL_RESULT_SUCCESS) {
         LOGE("OpenSLES playItf SetPlayState SL_PLAYSTATE_STOPPED failed error code = %d", result);
         return -1;
     }
@@ -209,8 +215,10 @@ int OpenSLESPlayer::initPlayer(AVCodecContext *codecContext, const AVCodecParame
 
 int OpenSLESPlayer::start() {
 
-    SLuint32 state;
 
+
+    SLuint32 state=NULL;
+    LOGE("OpenSLESPlayer start %d",playItf==NULL);
     SLresult result = (*playItf)->GetPlayState(playItf, &state);
 
     if (result != SL_RESULT_SUCCESS) {

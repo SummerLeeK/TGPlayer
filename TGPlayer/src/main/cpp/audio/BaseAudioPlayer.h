@@ -27,12 +27,15 @@ public:
 //    音频时钟
     double clock=0;
     virtual int initPlayer(AVCodecContext *codecContext,const AVCodecParameters *parameters) {
+        LOGE("initPlayer %s","BaseAudioPlayer");
         return 0;
     };
 
 
 
-    virtual int start() { return 0; };
+    virtual int start() {
+        LOGE("start %s","BaseAudioPlayer");
+        return 0; };
 
     virtual int pause() { return 0; };
 

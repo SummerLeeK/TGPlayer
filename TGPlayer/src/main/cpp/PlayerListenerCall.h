@@ -13,11 +13,12 @@
 class PlayerListenerCall {
 private:
     JavaVM *jvm;
-    JNIEnv *env;
     jobject tgPlayer;
-
+    jclass playerClazz;
+    jmethodID mOnPreparedMethod;
+    jobject OnPreparedListener;
 public:
-    PlayerListenerCall(JNIEnv *env,JavaVM *jvm);
+    PlayerListenerCall( JavaVM *jvm);
 
 
     void initFindClass(jobject tgplayer);
@@ -31,7 +32,7 @@ public:
 
     void invokeVideoSize(int width, int height);
 
-    void invokeError(int code, int extra);
+    void invokeError(int code, const char *extra);
 
     void invokeInfo(int what, int extra);
 

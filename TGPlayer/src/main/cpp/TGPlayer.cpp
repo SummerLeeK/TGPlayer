@@ -66,9 +66,8 @@ int findAVCodecContext(void *data) {
     int audioStreamIndex = av_find_best_stream(player->formatContext, AVMEDIA_TYPE_AUDIO, -1, -1,
                                                NULL, 0);
 
-    if (audioStreamIndex > 0) {
+    if (audioStreamIndex >= 0) {
         player->audioStreamIndex = audioStreamIndex;
-
 
 
         AVCodecParameters *parameters = player->formatContext->streams[audioStreamIndex]->codecpar;
@@ -85,11 +84,12 @@ int findAVCodecContext(void *data) {
 
         player->audioCodecContext = avcodec_alloc_context3(code);
 
-        player->audioPlayer=new OpenSLESPlayer();
+        player->audioPlayer = new OpenSLESPlayer;
 
-        player->audioPlayer->initPlayer(player->audioCodecContext,parameters);
+        player->audioPlayer->initPlayer(player->audioCodecContext, parameters);
 
         LOGE("audiof bits_per_raw_sample %d", parameters->bits_per_raw_sample);
+        LOGE("audioplayer address %p",player->audioPlayer);
         if (player->audioCodecContext == NULL) {
 
             char msg[100];
@@ -131,6 +131,10 @@ void *preparing(void *data) {
 
         player->javaCallHandle->throwException(IllegalStateException,
                                                "setDataSource maybe not complete true");
+        char *msg = (char *) malloc(sizeof(char) * 200);
+        sprintf(msg, "setDataSource maybe not complete true %s", player->path);
+//        player->javaCallHandle->throwException(IOException, msg);
+        player->listenerCall->invokeError(-22, msg);
         goto complete;
     }
 
@@ -143,9 +147,10 @@ void *preparing(void *data) {
     if (result < 0) {
         LOGE("avformat_open_input FAILED %d reason is %s", result, av_err2str(result));
 
-        char *msg = av_err2str(result);
-//        sprintf(msg, "setDataSource failed %s", path);
-        player->javaCallHandle->throwException(IOException, msg);
+        char *msg = (char *) malloc(sizeof(char) * 200);
+        sprintf(msg, "prepareAsync failed %s", player->path);
+//        player->javaCallHandle->throwException(IOException, msg);
+        player->listenerCall->invokeError(-22, msg);
 
         goto complete;
     }
@@ -155,10 +160,9 @@ void *preparing(void *data) {
 
     if (result < 0) {
         LOGE("avformat_find_stream_info FAILED %d reason is %s", result, av_err2str(result));
-        char *msg = av_err2str(result);
-        player->javaCallHandle->throwException(IOException, msg);
-
-
+        char *msg = (char *) malloc(sizeof(char) * 200);
+        sprintf(msg, "avformat_find_stream_info failed %s", player->path);
+        player->listenerCall->invokeError(-22, msg);
         goto complete;
     }
 
@@ -186,7 +190,7 @@ int TGPlayer::prepare() {
 
     pthread_mutex_lock(&playerMutex);
 
-
+    AVDictionary *dict = NULL;
     int result = 0;
 
     formatContext = avformat_alloc_context();
@@ -198,7 +202,6 @@ int TGPlayer::prepare() {
         goto failed;
     }
 
-    AVDictionary *dict;
 
     av_dict_set(&dict, "max_delay", "30000000", 0);
 
@@ -209,8 +212,8 @@ int TGPlayer::prepare() {
     if (result < 0) {
         LOGE("avformat_open_input FAILED %d reason is %s", result, av_err2str(result));
 
-        char *msg = av_err2str(result);
-//        sprintf(msg, "setDataSource failed %s", path);
+        char *msg = (char *) malloc(sizeof(char) * 100);
+        sprintf(msg, "setDataSource failed %s", path);
         javaCallHandle->throwException(IOException, msg);
 
         goto failed;
@@ -261,8 +264,11 @@ int TGPlayer::prepareSync() {
 void *readFrame(void *data) {
     TGPlayer *player = reinterpret_cast<TGPlayer *>(data);
 
-
+    LOGD("start read frame %d %d",player==NULL,true);
     int ret = -1;
+
+
+
     while (!player->exit) {
 
         if (player->pause) {
@@ -271,22 +277,24 @@ void *readFrame(void *data) {
         }
 
 
-        if (player->audioPlayer != NULL && player->audioPlayer->decodeAudio->playerQueue->packetQueue.size() > 100) {
+        if (player->audioPlayer != NULL &&
+            player->audioPlayer->decodeAudio->playerQueue->packetQueue.size() > 100) {
             av_usleep(1000 * 100);
             continue;
         }
 
-        if (player->videoPlayer != NULL && player->videoPlayer->decodeVideo->playerQueue->packetQueue.size() > 100) {
-            av_usleep(1000 * 100);
-            continue;
-        }
+//        if (player->videoPlayer != NULL &&
+//            player->videoPlayer->decodeVideo->playerQueue->packetQueue.size() > 100) {
+//            av_usleep(1000 * 100);
+//            continue;
+//        }
 
         AVPacket *packet = av_packet_alloc();
         ret = av_read_frame(player->formatContext, packet);
 
         if (ret == 0) {
             if (packet->stream_index == player->videoStreamIndex) {
-                player->videoPlayer->decodeVideo->playerQueue->pushPkt(packet);
+//                player->videoPlayer->decodeVideo->playerQueue->pushPkt(packet);
             } else if (packet->stream_index == player->audioStreamIndex) {
                 player->audioPlayer->decodeAudio->playerQueue->pushPkt(packet);
             } else {
@@ -299,8 +307,11 @@ void *readFrame(void *data) {
             av_free(packet);
             packet = NULL;
 
-            if ((player->videoPlayer != NULL && player->videoPlayer->decodeVideo->playerQueue->frameQueue.empty()) ||
-                (player->audioPlayer != NULL && player->audioPlayer->decodeAudio->playerQueue->frameQueue.empty())) {
+            if (
+//                    (player->videoPlayer != NULL &&
+//                 player->videoPlayer->decodeVideo->playerQueue->frameQueue.empty()) ||
+                (player->audioPlayer != NULL &&
+                 player->audioPlayer->decodeAudio->playerQueue->frameQueue.empty())) {
                 player->exit = true;
             }
         }
@@ -312,18 +323,26 @@ void *readFrame(void *data) {
     pthread_exit(&player->readFrameThread);
 }
 
+void* playThreadMethod(void*data){
+    TGPlayer *player = reinterpret_cast<TGPlayer *>(data);
 
+    player->audioPlayer->start();
+}
 
 int TGPlayer::start() {
 
+
+    LOGE("%s","start");
     pthread_mutex_lock(&playerMutex);
 
     pthread_create(&readFrameThread, NULL, readFrame, this);
 
 
-    audioPlayer->start();
+    pthread_create(&playThread,NULL,playThreadMethod,this);
+
 
     pthread_mutex_unlock(&playerMutex);
+
     return 0;
 }
 

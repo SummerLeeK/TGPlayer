@@ -5,12 +5,11 @@
 #include "DecodeAudio.h"
 
 
-
 DecodeAudio::DecodeAudio(const AVCodecParameters *params,
                          AVCodecContext *codecContext) {
     playerQueue = new PlayerQueue;
 
-
+    this->params = params;
     this->codecContext = codecContext;
 
     swrContext = swr_alloc();
@@ -58,7 +57,6 @@ int DecodeAudio::getPcmData(uint8_t **pcm) {
         if (avcodec_receive_frame(codecContext, frame) == 0) {
 
 
-
             swr_alloc_set_opts(swrContext, AV_CH_LAYOUT_STEREO, AV_SAMPLE_FMT_S16,
                                frame->sample_rate, frame->channel_layout,
                                (AVSampleFormat) frame->format, frame->sample_rate, 0, NULL);
@@ -84,6 +82,7 @@ int DecodeAudio::getPcmData(uint8_t **pcm) {
 
 
 int DecodeAudio::open_codec() {
+
     AVCodec *codec = avcodec_find_decoder(params->codec_id);
 
     int result = avcodec_open2(codecContext, codec, NULL);

@@ -26,7 +26,7 @@ extern "C" {
 JavaVM *jvm;
 
 pthread_mutex_t mutex;
-jobject globalRefTGPlayer;
+static jobject globalRefTGPlayer;
 JavaCallHandle *javaCallHandle;
 PlayerListenerCall *listenerCall;
 
@@ -151,12 +151,11 @@ static void TGPlayer_native_setup(JNIEnv *env, jobject thiz) {
     globalRefTGPlayer = env->NewGlobalRef(thiz);
     TGPlayer *player = new TGPlayer();
 
-    listenerCall->initFindClass(globalRefTGPlayer);
+    listenerCall->initFindClass(thiz);
     player->javaCallHandle = javaCallHandle;
+
     player->listenerCall = listenerCall;
     setTGPlayerPtr(env, globalRefTGPlayer, player);
-
-
 }
 
 
@@ -274,8 +273,8 @@ JNIEXPORT jint JNI_OnLoad(JavaVM *vm, void *rev) {
 
     pthread_mutex_init(&mutex, NULL);
 
-    javaCallHandle = new JavaCallHandle(env, vm);
-    listenerCall = new PlayerListenerCall(env, vm);
+    javaCallHandle = new JavaCallHandle(vm);
+    listenerCall = new PlayerListenerCall(vm);
 
     FFmpeg_init();
 

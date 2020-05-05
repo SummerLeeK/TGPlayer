@@ -24,7 +24,7 @@ public:
     uint8_t *buf;
     PlayerQueue *playerQueue;
 
-    AVCodecParameters *params;
+    const AVCodecParameters *params;
     bool isNewPacket= true;
 
 
