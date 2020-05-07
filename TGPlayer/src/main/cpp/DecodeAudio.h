@@ -18,7 +18,7 @@ extern "C" {
 
 class DecodeAudio {
 public:
-    SwrContext *swrContext;
+
     AVCodecContext *codecContext;
 
     uint8_t *buf;

@@ -20,8 +20,6 @@ PlayerQueue::PlayerQueue() {
 int PlayerQueue::pushPkt(AVPacket *pkt) {
 
     pthread_mutex_lock(&packetMutex);
-
-
     packetQueue.push(pkt);
     pthread_cond_signal(&packetCond);
     pthread_mutex_unlock(&packetMutex);
@@ -45,15 +43,16 @@ int PlayerQueue::popPkt(AVPacket *pkt) {
                 packetQueue.pop();
             }
 
-            av_packet_free(&packet);
-            av_free(packet);
-            packet = NULL;
+            av_packet_unref(packet);
+//            av_free(packet);
+//            packet = NULL;
             break;
         } else {
             pthread_cond_wait(&packetCond, &packetMutex);
         }
 
     }
+
 
     pthread_cond_signal(&packetCond);
     pthread_mutex_unlock(&packetMutex);
@@ -73,9 +72,7 @@ int PlayerQueue::getPkt(AVPacket *pkt) {
 
             av_packet_ref(pkt, packet);
 
-            av_packet_free(&packet);
-            av_free(packet);
-            packet = NULL;
+            av_packet_unref(packet);
             break;
         } else {
             pthread_cond_wait(&packetCond, &packetMutex);

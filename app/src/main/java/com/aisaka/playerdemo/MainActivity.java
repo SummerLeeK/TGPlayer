@@ -45,7 +45,7 @@ public class MainActivity extends AppCompatActivity {
 
         path = Environment.getExternalStorageDirectory().getAbsolutePath() + File.separator + "1.mp4";
 
-        path=netPath;
+//        path=netPath;
          player = new TGPlayer();
         try {
             player.setDataSource(path,null);

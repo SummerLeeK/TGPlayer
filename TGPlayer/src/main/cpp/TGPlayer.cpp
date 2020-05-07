@@ -277,11 +277,11 @@ void *readFrame(void *data) {
         }
 
 
-        if (player->audioPlayer != NULL &&
-            player->audioPlayer->decodeAudio->playerQueue->packetQueue.size() > 100) {
-            av_usleep(1000 * 100);
-            continue;
-        }
+//        if (player->audioPlayer != NULL &&
+//            player->audioPlayer->decodeAudio->playerQueue->getPacketQueueSize() > 100) {
+//            av_usleep(1000 * 100);
+//            continue;
+//        }
 
 //        if (player->videoPlayer != NULL &&
 //            player->videoPlayer->decodeVideo->playerQueue->packetQueue.size() > 100) {
@@ -327,6 +327,8 @@ void* playThreadMethod(void*data){
     TGPlayer *player = reinterpret_cast<TGPlayer *>(data);
 
     player->audioPlayer->start();
+
+    pthread_exit(&player->playThread);
 }
 
 int TGPlayer::start() {
