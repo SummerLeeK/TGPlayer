@@ -70,6 +70,9 @@ static void TGPlayer_setDataSourceAndHeaders(JNIEnv *env, jobject thiz, jstring 
 
 
 static void TGPlayer_setVideoSurface(JNIEnv *env, jobject thiz, jobject surface) {
+    TGPlayer *player = getTGPlayerPtr(env, thiz);
+
+    player->setVideoSurface(env,surface);
 
 }
 

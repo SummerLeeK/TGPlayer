@@ -7,8 +7,11 @@
 
 
 #include "PlayerQueue.h"
+#include <native_log.h>
+
 
 extern "C" {
+#include <libswscale/swscale.h>
 #include "include/libavcodec/avcodec.h"
 };
 
@@ -23,13 +26,13 @@ public:
     pthread_t videoDecodeThread;
     int videoWidth;
     int videoHeight;
-    AVCodecParameters *params;
-
-    DecodeVideo(const AVCodecParameters *params);
+    const AVCodecParameters *params;
+    SwsContext* swsContext;
+    DecodeVideo(AVCodecContext *codecContext,const AVCodecParameters *params);
 
     int open_codec();
 
-
+    int decode(AVFrame* dst);
 
     ~DecodeVideo();
 

@@ -11,8 +11,7 @@ extern "C" {
 
 #include <video/BaseVideoPlayer.h>
 #include <audio/BaseAudioPlayer.h>
-#include "DecodeVideo.h"
-#include "DecodeAudio.h"
+
 #include "JavaCallHandle.h"
 #include "PlayerListenerCall.h"
 
@@ -29,13 +28,14 @@ public:
     pthread_t playThread;
     pthread_t prepareThread;
 
-
+    jobject surfaceObj;
 
     pthread_mutex_t playerMutex;
     PlayerListenerCall *listenerCall;
     JavaCallHandle *javaCallHandle;
     BaseAudioPlayer *audioPlayer;
     BaseVideoPlayer *videoPlayer;
+
     int clock;
 
     int videoStreamIndex;
@@ -50,6 +50,8 @@ public:
     int prepare();
 
     int prepareSync();
+
+    int setVideoSurface(JNIEnv* env,jobject surfaceObj);
 
     int start();
 

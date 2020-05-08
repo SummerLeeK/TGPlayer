@@ -97,6 +97,8 @@ find_library( # Sets the name of the path variable.
         log)
 
 
+
+
 find_library( # Sets the name of the path variable.
         android
 
@@ -123,4 +125,5 @@ target_link_libraries( # Specifies the target library.
         ${log-lib}
         ${android}
         OpenSLES
+        jnigraphics
         )

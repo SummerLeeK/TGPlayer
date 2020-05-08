@@ -13,6 +13,7 @@ import android.os.Looper;
 import android.os.Message;
 import android.os.Process;
 import android.util.Log;
+import android.view.SurfaceView;
 import android.widget.TextView;
 
 
@@ -25,30 +26,32 @@ public class MainActivity extends AppCompatActivity {
 
     public static final String TAG = "MainActivity";
 
-    String netPath=   "http://clips.vorwaerts-gmbh.de/big_buck_bunny.mp4";
+    String netPath = "http://clips.vorwaerts-gmbh.de/big_buck_bunny.mp4";
     TextView textView;
     String path;
 
+    private SurfaceView surfaceView;
     TGPlayer player;
-    private Handler handler=new Handler(Looper.getMainLooper()){
+    private Handler handler = new Handler(Looper.getMainLooper()) {
 
         @Override
         public void handleMessage(Message msg) {
             player.start();
         }
     };
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         textView = findViewById(R.id.player);
-
+        surfaceView = findViewById(R.id.surface);
         path = Environment.getExternalStorageDirectory().getAbsolutePath() + File.separator + "1.mp4";
 
 //        path=netPath;
-         player = new TGPlayer();
+        player = new TGPlayer();
         try {
-            player.setDataSource(path,null);
+            player.setDataSource(path, null);
         } catch (IOException e) {
             Log.e(TAG, "IOException \t" + e.getMessage());
         }
@@ -57,7 +60,7 @@ public class MainActivity extends AppCompatActivity {
             public void onPrepared(TGPlayer mp) {
 //                textView.setText("onPrepared finished");
 //                mp.start();
-                Log.e(TAG, "onPrepared \t"+Thread.currentThread().toString());
+                Log.e(TAG, "onPrepared \t" + Thread.currentThread().toString());
                 handler.sendEmptyMessage(0);
             }
         });
@@ -66,16 +69,18 @@ public class MainActivity extends AppCompatActivity {
         player.setOnVideoSizeChangedListener(new TGPlayer.OnVideoSizeChangedListener() {
             @Override
             public void onVideoSizeChanged(TGPlayer mp, int width, int height) {
-                Log.e(TAG, "onVideoSizeChanged \t" + width+"\t"+height+"\t"+Thread.currentThread().toString());
+                Log.e(TAG, "onVideoSizeChanged \t" + width + "\t" + height + "\t" + Thread.currentThread().toString());
             }
         });
 
         player.setOnErrorListener(new TGPlayer.OnErrorListener() {
             @Override
             public void onError(TGPlayer mp, int what, String msg) {
-                Log.e(TAG, "onError \t" + what+"\t"+msg);
+                Log.e(TAG, "onError \t" + what + "\t" + msg);
             }
         });
+
+        player.setSurface(surfaceView.getHolder().getSurface());
 
         player.prepareAsync();
 

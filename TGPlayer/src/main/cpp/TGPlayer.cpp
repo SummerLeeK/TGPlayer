@@ -4,6 +4,7 @@
 
 #include <native_log.h>
 #include <audio/OpenSLESPlayer.h>
+#include <video/ANativeWindowRender.h>
 
 extern "C" {
 #include <libavutil/time.h>
@@ -47,6 +48,11 @@ int findAVCodecContext(void *data) {
 
 
         player->videoCodecContext = avcodec_alloc_context3(codec);
+
+        player->videoPlayer = new ANativeWindowRender(parameters,player->videoCodecContext);
+
+
+
 
         if (player->videoCodecContext == NULL) {
             char msg[100];
@@ -119,6 +125,11 @@ int TGPlayer::setDataSource(const char *path) {
     return result;
 }
 
+
+int TGPlayer::setVideoSurface(JNIEnv *env, jobject surfaceObj) {
+    videoPlayer->initplayer(env, surfaceObj);
+    return 0;
+}
 
 void *preparing(void *data) {
 
@@ -277,17 +288,17 @@ void *readFrame(void *data) {
         }
 
 
-//        if (player->audioPlayer != NULL &&
-//            player->audioPlayer->decodeAudio->playerQueue->getPacketQueueSize() > 100) {
-//            av_usleep(1000 * 100);
-//            continue;
-//        }
+        if (player->audioPlayer != NULL &&
+            player->audioPlayer->decodeAudio->playerQueue->getPacketQueueSize() > 100) {
+            av_usleep(1000 * 100);
+            continue;
+        }
 
-//        if (player->videoPlayer != NULL &&
-//            player->videoPlayer->decodeVideo->playerQueue->packetQueue.size() > 100) {
-//            av_usleep(1000 * 100);
-//            continue;
-//        }
+        if (player->videoPlayer != NULL &&
+            player->videoPlayer->decodeVideo->playerQueue->packetQueue.size() > 100) {
+            av_usleep(1000 * 100);
+            continue;
+        }
 
         AVPacket *packet = av_packet_alloc();
         ret = av_read_frame(player->formatContext, packet);
@@ -327,7 +338,7 @@ void* playThreadMethod(void*data){
     TGPlayer *player = reinterpret_cast<TGPlayer *>(data);
 
     player->audioPlayer->start();
-
+    player->videoPlayer->start();
     pthread_exit(&player->playThread);
 }
 
