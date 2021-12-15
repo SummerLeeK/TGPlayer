@@ -18,18 +18,28 @@ android {
                 cppFlags ""
             }
             ndk {
-                abiFilters 'arm64-v8a','x86','x86_64'
+                abiFilters 'arm64-v8a'
             }
         }
 
         ndk {
-            abiFilters 'arm64-v8a','x86','x86_64'
+            abiFilters 'arm64-v8a'
         }
 
         sourceSets {
             main {
                 jniLibs.srcDirs = ['libs']
             }
+        }
+        packagingOptions {
+            pickFirst "**/libavcodec.so"
+            pickFirst "**/libswscale.so"
+            pickFirst "**/libavutil.so"
+            pickFirst "**/libswresample.so"
+            pickFirst "**/libavfilter.so"
+            pickFirst "**/libavformat.so"
+            pickFirst "**/libavdevice.so"
+            pickFirst "**/libyuv.so"
         }
     }
 
@@ -43,6 +53,7 @@ android {
     externalNativeBuild {
         cmake {
             path "CMakeLists.txt"
+            version "3.10.2"
         }
     }
 

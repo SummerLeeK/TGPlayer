@@ -30,6 +30,7 @@ void pcmPlayCallBack(SLAndroidSimpleBufferQueueItf bq, void *data) {
             player->clock += time;
             (*bq)->Enqueue(bq,player->buffer, dataSize);
 //            av_usleep(1000 * 100);
+
         }
 
     }
@@ -226,7 +227,7 @@ int OpenSLESPlayer::initPlayer(AVCodecContext *codecContext, const AVCodecParame
 int OpenSLESPlayer::start() {
 
 
-    SLuint32 state = NULL;
+    SLuint32 state = -1;
     LOGE("OpenSLESPlayer start %d", playItf == NULL);
     SLresult result = (*playItf)->GetPlayState(playItf, &state);
 
@@ -242,12 +243,12 @@ int OpenSLESPlayer::start() {
 
     result = (*playItf)->SetPlayState(playItf, SL_PLAYSTATE_PLAYING);
     if (result != SL_RESULT_SUCCESS) {
-        LOGE("OpenSLESPlayer start SetPlayState failed %s", "");
+        LOGE("OpenSLESPlayer start SetPlayState 1 failed %s", "");
         return -1;
     }
 
     result = (*playItf)->GetPlayState(playItf, &state);
-    LOGE("OpenSLESPlayer start SetPlayState failed %d", state);
+    LOGE("OpenSLESPlayer GetPlayState failed %d", state);
 
     pcmPlayCallBack(playBufferQueueItf, this);
 

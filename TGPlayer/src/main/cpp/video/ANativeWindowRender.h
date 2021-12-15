@@ -5,25 +5,23 @@
 #ifndef PLAYERDEMO_ANATIVEWINDOWRENDER_H
 #define PLAYERDEMO_ANATIVEWINDOWRENDER_H
 
-
-#include "BaseVideoPlayer.h"
 #include <android/native_window_jni.h>
 #include <android/native_window.h>
 #include <native_log.h>
 extern "C"{
 #include <libavutil/imgutils.h>
-};
-
+}
+#include "BaseVideoPlayer.h"
 
 class ANativeWindowRender : public BaseVideoPlayer {
 public:
-    ANativeWindow *nativeWindow;
-    const AVCodecParameters *codecParameters;
-    AVCodecContext *avCodecContext;
-    pthread_t playerThread;
-
     ANativeWindowRender(const AVCodecParameters *codecParameters, AVCodecContext *avCodecContext);
 
+    ANativeWindow *nativeWindow;
+
+    pthread_t playerThread;
+
+    double currentPTS=0;
 
 
     int initplayer(JNIEnv *env,jobject surface);

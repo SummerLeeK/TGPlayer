@@ -7,14 +7,19 @@
 
 extern "C" {
 #include <libavformat/avformat.h>
-};
+#include <libavutil/time.h>
+#include <libavutil/mem.h>
+#include <libavutil/channel_layout.h>
+}
 
-#include <video/BaseVideoPlayer.h>
-#include <audio/BaseAudioPlayer.h>
-
+#include "video/BaseVideoPlayer.h"
+#include "audio/BaseAudioPlayer.h"
+#include "Exception.h"
 #include "JavaCallHandle.h"
 #include "PlayerListenerCall.h"
-
+#include <native_log.h>
+#include <audio/OpenSLESPlayer.h>
+#include <video/ANativeWindowRender.h>
 
 class TGPlayer {
 public:
@@ -22,7 +27,7 @@ public:
     AVCodecContext *videoCodecContext;
     AVCodecContext *audioCodecContext;
     char *path;
-    bool pause;
+    bool pause= false;
     bool exit = false;
     pthread_t readFrameThread;
     pthread_t playThread;

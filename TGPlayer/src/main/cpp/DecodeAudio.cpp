@@ -13,7 +13,7 @@ DecodeAudio::DecodeAudio(const AVCodecParameters *params,
     this->codecContext = codecContext;
 
 
-    buf = (uint8_t *) malloc(params->sample_rate * 2 * 2 * 2/3);
+    buf = (uint8_t *) malloc(params->sample_rate * 2 * 2 * 2 / 3);
 
 }
 
@@ -36,28 +36,29 @@ int DecodeAudio::getPcmData(uint8_t **pcm) {
     for (;;) {
 
         if (isNewPacket) {
-
+            isNewPacket = false;
             packet = av_packet_alloc();
             if (playerQueue->getPkt(packet) != 0) {
+                av_packet_free(&packet);
+                av_free(packet);
+                packet = NULL;
                 LOGE("getPkt failed %d", playerQueue->getPacketQueueSize());
                 continue;
             }
 
-        }
+            int ret = avcodec_send_packet(codecContext, packet);
 
-        LOGE("avcodec_send_packet is NULL %d",packet==NULL);
-        int ret = avcodec_send_packet(codecContext, packet);
-
-        if (ret < 0 && ret != AVERROR(EAGAIN) && ret != AVERROR_EOF) {
+            if (ret < 0 && ret != AVERROR(EAGAIN) && ret != AVERROR_EOF) {
 //            一帧数据已经读取完毕
-            playerQueue->popPkt(packet);
-            av_packet_free(&packet);
-//            av_free(&packet);
-//            packet = NULL;
-            isNewPacket = true;
+                av_packet_free(&packet);
+                av_free(&packet);
+                packet = NULL;
+                isNewPacket = true;
 //            LOGE("avcodec_send_packet %d", playerQueue->getPacketQueueSize());
-            continue;
+                continue;
+            }
         }
+
         AVFrame *frame = av_frame_alloc();
         if (avcodec_receive_frame(codecContext, frame) == 0) {
 
@@ -80,16 +81,17 @@ int DecodeAudio::getPcmData(uint8_t **pcm) {
                                     frame->nb_samples);
 
 
-            LOGE("swr_convert %d", nb_sample);
+//            LOGE("swr_convert %d", nb_sample);
 
             av_frame_free(&frame);
             av_free(frame);
             frame = NULL;
             swr_free(&swrContext);
             *pcm = buf;
+            double pts = frame->pts * av_q2d(frame->time_base);
+            LOGD(TAG, "audio pts=%f", pts);
             break;
-        } else
-        {
+        } else {
             isNewPacket = true;
             av_frame_free(&frame);
 //            av_free(frame);
@@ -110,7 +112,8 @@ int DecodeAudio::getPcmData(uint8_t **pcm) {
 
 int DecodeAudio::open_codec() {
 
-    AVCodec *codec = avcodec_find_decoder(params->codec_id);
+    const AVCodec *codec = NULL;
+    codec = avcodec_find_decoder(params->codec_id);
 
 
     if (avcodec_parameters_to_context(codecContext, params) != 0) {

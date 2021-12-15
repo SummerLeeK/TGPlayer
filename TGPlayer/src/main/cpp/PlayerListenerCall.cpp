@@ -29,7 +29,7 @@ void PlayerListenerCall::invokePrepared() {
     int attach = -1;
 
     JNIEnv *env=NULL;
-    int ret=jvm->GetEnv(reinterpret_cast<void **>(&env), JNI_VERSION_1_4);
+    int ret=(*jvm).GetEnv((void **)(&env), JNI_VERSION_1_4);
     LOGE("GetEnv result %d",ret);
     if (env==NULL){
         attach = jvm->AttachCurrentThread(&env, NULL);

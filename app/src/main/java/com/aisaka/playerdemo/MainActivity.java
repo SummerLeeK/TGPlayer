@@ -13,6 +13,7 @@ import android.os.Looper;
 import android.os.Message;
 import android.os.Process;
 import android.util.Log;
+import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.widget.TextView;
 
@@ -61,7 +62,14 @@ public class MainActivity extends AppCompatActivity {
 //                textView.setText("onPrepared finished");
 //                mp.start();
                 Log.e(TAG, "onPrepared \t" + Thread.currentThread().toString());
-                handler.sendEmptyMessage(0);
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        player.setSurface(surfaceView.getHolder().getSurface());
+                        player.start();
+                    }
+                });
+
             }
         });
 
@@ -80,12 +88,28 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        player.setSurface(surfaceView.getHolder().getSurface());
 
         player.prepareAsync();
 
+        surfaceView.getHolder().addCallback(new SurfaceHolder.Callback() {
+            @Override
+            public void surfaceCreated(SurfaceHolder surfaceHolder) {
+                Log.d(TAG, "surfaceCreated \t" + Thread.currentThread().toString());
 
+            }
 
+            @Override
+            public void surfaceChanged(SurfaceHolder surfaceHolder, int i, int i1, int i2) {
+                Log.d(TAG, "surfaceChanged \t" + Thread.currentThread().toString());
+
+            }
+
+            @Override
+            public void surfaceDestroyed(SurfaceHolder surfaceHolder) {
+                Log.d(TAG, "surfaceDestroyed \t" + Thread.currentThread().toString());
+
+            }
+        });
 
     }
 

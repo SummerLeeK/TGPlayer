@@ -13,6 +13,7 @@
 extern "C" {
 #include <libswscale/swscale.h>
 #include "include/libavcodec/avcodec.h"
+#include <libyuv/libyuv.h>
 };
 
 
@@ -27,13 +28,14 @@ public:
     int videoWidth;
     int videoHeight;
     const AVCodecParameters *params;
+    AVDictionary *opts = NULL;
     SwsContext* swsContext;
     DecodeVideo(AVCodecContext *codecContext,const AVCodecParameters *params);
 
     int open_codec();
 
     int decode(AVFrame* dst);
-
+    int renderYUV(AVFrame *dst,AVFrame *frame);
     ~DecodeVideo();
 
 };

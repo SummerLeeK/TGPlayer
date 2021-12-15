@@ -2,19 +2,8 @@
 // Created by Apple on 2020-02-27.
 //
 
-#include <native_log.h>
-#include <audio/OpenSLESPlayer.h>
-#include <video/ANativeWindowRender.h>
-
-extern "C" {
-#include <libavutil/time.h>
-#include <libavutil/mem.h>
-#include <libavutil/channel_layout.h>
-}
 
 #include "TGPlayer.h"
-#include "Exception.h"
-
 
 TGPlayer::TGPlayer() {
 
@@ -24,7 +13,8 @@ TGPlayer::TGPlayer() {
 
 int findAVCodecContext(void *data) {
     TGPlayer *player = reinterpret_cast<TGPlayer *>(data);
-
+    const AVCodec *codec = NULL;
+    int result = -1;
     int videoStreamIndex = av_find_best_stream(player->formatContext, AVMEDIA_TYPE_VIDEO, -1, -1,
                                                NULL,
                                                0);
@@ -37,7 +27,7 @@ int findAVCodecContext(void *data) {
 
 
         AVCodecParameters *parameters = player->formatContext->streams[videoStreamIndex]->codecpar;
-        AVCodec *codec = avcodec_find_decoder(parameters->codec_id);
+        codec = avcodec_find_decoder(parameters->codec_id);
 
         if (codec == NULL) {
             char msg[100];
@@ -47,11 +37,13 @@ int findAVCodecContext(void *data) {
         }
 
 
-        player->videoCodecContext = avcodec_alloc_context3(codec);
-
-        player->videoPlayer = new ANativeWindowRender(parameters,player->videoCodecContext);
-
-
+        player->videoCodecContext = avcodec_alloc_context3(NULL);
+        result = avcodec_parameters_to_context(player->videoCodecContext, parameters);
+        if (result<0){
+            LOGE(TAG,"video avcodec_parameters_to_context failed");
+        }
+        player->videoPlayer = new ANativeWindowRender(parameters,
+                                                      player->videoCodecContext);
 
 
         if (player->videoCodecContext == NULL) {
@@ -77,9 +69,10 @@ int findAVCodecContext(void *data) {
 
 
         AVCodecParameters *parameters = player->formatContext->streams[audioStreamIndex]->codecpar;
-        AVCodec *code = avcodec_find_decoder(parameters->codec_id);
 
-        if (code == NULL) {
+        codec = avcodec_find_decoder(parameters->codec_id);
+
+        if (codec == NULL) {
             char msg[100];
 
             sprintf(msg, "audio codec cant't find %d", parameters->codec_id);
@@ -88,14 +81,18 @@ int findAVCodecContext(void *data) {
         }
 
 
-        player->audioCodecContext = avcodec_alloc_context3(code);
+        player->audioCodecContext = avcodec_alloc_context3(NULL);
+        result = avcodec_parameters_to_context(player->audioCodecContext, parameters);
+        if (result<0){
+            LOGE(TAG,"audio avcodec_parameters_to_context failed");
+        }
 
         player->audioPlayer = new OpenSLESPlayer;
 
         player->audioPlayer->initPlayer(player->audioCodecContext, parameters);
 
         LOGE("audiof bits_per_raw_sample %d", parameters->bits_per_raw_sample);
-        LOGE("audioplayer address %p",player->audioPlayer);
+        LOGE("audioplayer address %p", player->audioPlayer);
         if (player->audioCodecContext == NULL) {
 
             char msg[100];
@@ -127,15 +124,21 @@ int TGPlayer::setDataSource(const char *path) {
 
 
 int TGPlayer::setVideoSurface(JNIEnv *env, jobject surfaceObj) {
+    if (surfaceObj == NULL) {
+        LOGE("setVideoSurface surface is NULL");
+        return -1;
+    }
     videoPlayer->initplayer(env, surfaceObj);
     return 0;
 }
 
-void *preparing(void *data) {
+extern "C" void *preparing(void *data) {
 
     int result = 0;
     TGPlayer *player = reinterpret_cast<TGPlayer *>(data);
     AVDictionary *dict = NULL;
+    AVDictionary *codec_opts = NULL;
+    AVDictionary **opts = NULL;
     player->formatContext = avformat_alloc_context();
 
     if (player->formatContext == NULL) {
@@ -165,8 +168,6 @@ void *preparing(void *data) {
 
         goto complete;
     }
-
-
     result = avformat_find_stream_info(player->formatContext, NULL);
 
     if (result < 0) {
@@ -178,7 +179,7 @@ void *preparing(void *data) {
     }
 
 
-//    av_dump_format(player->formatContext, -1, player->path, 0);
+    av_dump_format(player->formatContext, -1, player->path, 0);
 
 
     result = findAVCodecContext(data);
@@ -194,7 +195,6 @@ void *preparing(void *data) {
     complete:
     pthread_exit(&player->prepareThread);
 }
-
 
 int TGPlayer::prepare() {
 
@@ -236,8 +236,6 @@ int TGPlayer::prepare() {
     if (result < 0) {
         LOGE("avformat_find_stream_info FAILED %d reason is %s", result, av_err2str(result));
 //        player->javaCallHandle->inv(IOException, msg);
-
-
         goto failed;
     }
 
@@ -274,11 +272,8 @@ int TGPlayer::prepareSync() {
 
 void *readFrame(void *data) {
     TGPlayer *player = reinterpret_cast<TGPlayer *>(data);
-
-    LOGD("start read frame %d %d",player==NULL,true);
+    LOGD("start read frame %d %d %d", player == NULL, player->exit, player->pause);
     int ret = -1;
-
-
 
     while (!player->exit) {
 
@@ -301,11 +296,12 @@ void *readFrame(void *data) {
         }
 
         AVPacket *packet = av_packet_alloc();
+
         ret = av_read_frame(player->formatContext, packet);
 
         if (ret == 0) {
             if (packet->stream_index == player->videoStreamIndex) {
-//                player->videoPlayer->decodeVideo->playerQueue->pushPkt(packet);
+                player->videoPlayer->decodeVideo->playerQueue->pushPkt(packet);
             } else if (packet->stream_index == player->audioStreamIndex) {
                 player->audioPlayer->decodeAudio->playerQueue->pushPkt(packet);
             } else {
@@ -319,10 +315,10 @@ void *readFrame(void *data) {
             packet = NULL;
 
             if (
-//                    (player->videoPlayer != NULL &&
-//                 player->videoPlayer->decodeVideo->playerQueue->frameQueue.empty()) ||
-                (player->audioPlayer != NULL &&
-                 player->audioPlayer->decodeAudio->playerQueue->frameQueue.empty())) {
+                    (player->videoPlayer != NULL &&
+                     player->videoPlayer->decodeVideo->playerQueue->frameQueue.empty()) ||
+                    (player->audioPlayer != NULL &&
+                     player->audioPlayer->decodeAudio->playerQueue->frameQueue.empty())) {
                 player->exit = true;
             }
         }
@@ -334,7 +330,7 @@ void *readFrame(void *data) {
     pthread_exit(&player->readFrameThread);
 }
 
-void* playThreadMethod(void*data){
+void *playThreadMethod(void *data) {
     TGPlayer *player = reinterpret_cast<TGPlayer *>(data);
 
     player->audioPlayer->start();
@@ -345,13 +341,13 @@ void* playThreadMethod(void*data){
 int TGPlayer::start() {
 
 
-    LOGE("%s","start");
+    LOGE("%s", "start");
     pthread_mutex_lock(&playerMutex);
 
     pthread_create(&readFrameThread, NULL, readFrame, this);
 
 
-    pthread_create(&playThread,NULL,playThreadMethod,this);
+    pthread_create(&playThread, NULL, playThreadMethod, this);
 
 
     pthread_mutex_unlock(&playerMutex);

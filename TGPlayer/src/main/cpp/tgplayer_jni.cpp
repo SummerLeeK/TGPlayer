@@ -72,7 +72,7 @@ static void TGPlayer_setDataSourceAndHeaders(JNIEnv *env, jobject thiz, jstring 
 static void TGPlayer_setVideoSurface(JNIEnv *env, jobject thiz, jobject surface) {
     TGPlayer *player = getTGPlayerPtr(env, thiz);
 
-    player->setVideoSurface(env,surface);
+    player->setVideoSurface(env, surface);
 
 }
 
@@ -179,7 +179,7 @@ static JNINativeMethod g_methods[] = {
 
         {       "_setVideoSurface",    "(Landroid/view/Surface;)V",     (void *) TGPlayer_setVideoSurface},
 
-                {       "_prepare",       "()V",                           (void *) TGPlayer_prepare},
+        {       "_prepare",            "()V",                           (void *) TGPlayer_prepare},
         {       "_prepareAsync",       "()V",                           (void *) TGPlayer_prepareAsync},
         {       "_start",              "()V",                           (void *) TGPlayer_start},
         {       "_stop",               "()V",                           (void *) TGPlayer_stop},
@@ -245,7 +245,7 @@ void FFmpeg_init() {
         return;
 
 
-    av_log_set_callback(&ffmpeg_log_callback);
+//    av_log_set_callback(&ffmpeg_log_callback);
 //    avcodec_register_all();
 
     avdevice_register_all();
@@ -258,6 +258,7 @@ void FFmpeg_init() {
 
     isFFmpegInited = true;
 
+
 }
 
 
@@ -266,7 +267,7 @@ JNIEXPORT jint JNI_OnLoad(JavaVM *vm, void *rev) {
     JNIEnv *env = NULL;
     jvm = vm;
     if (vm->GetEnv((void **) &env, JNI_VERSION_1_4) != JNI_OK) {
-
+        LOGE("JNI_OnLoad", "GETENVFAILEDONLOAD");
         return -1;
     }
 

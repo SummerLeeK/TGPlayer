@@ -62,17 +62,21 @@ int PlayerQueue::popPkt(AVPacket *pkt) {
 }
 
 int PlayerQueue::getPkt(AVPacket *pkt) {
+    int result = -1;
     pthread_mutex_lock(&packetMutex);
-
 
     while (true) {
 
         if (packetQueue.size() > 0) {
             AVPacket *packet = packetQueue.front();
 
-            av_packet_ref(pkt, packet);
-
-            av_packet_unref(packet);
+            if (av_packet_ref(pkt, packet)==0){
+                packetQueue.pop();
+                av_packet_free(&packet);
+                av_free(packet);
+                packet = NULL;
+                result=0;
+            }
             break;
         } else {
             pthread_cond_wait(&packetCond, &packetMutex);
@@ -80,13 +84,11 @@ int PlayerQueue::getPkt(AVPacket *pkt) {
 
     }
 
-    pthread_cond_signal(&packetCond);
     pthread_mutex_unlock(&packetMutex);
     LOGD("playqueue pop packet");
-    return 0;
+    return result;
 
 }
-
 
 
 int PlayerQueue::pushFrame(AVFrame *frame) {
@@ -162,6 +164,7 @@ void PlayerQueue::clearPacketQueue() {
     pthread_cond_signal(&packetCond);
 
 }
+
 PlayerQueue::~PlayerQueue() {
 
     pthread_mutex_destroy(&packetMutex);
